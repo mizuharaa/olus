@@ -43,7 +43,9 @@ jobs:
           key: poetry-${{ runner.os }}-${{ hashFiles('apps/api/poetry.lock') }}
 
       - name: Install dependencies
-        run: poetry install --with dev --no-interaction
+        run: |
+          poetry check --lock
+          poetry install --with dev --no-interaction
 
       - name: Lint (ruff)
         run: poetry run ruff check src/ tests/

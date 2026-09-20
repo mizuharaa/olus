@@ -33,6 +33,7 @@ The recovered source was integrated onto current `origin/main` in a separate wor
 |---|---|---|
 | P0 | Account, scenario and run features remained unpublished; run route was ignored | Recover the complete local implementation onto current main; anchor the root `runs/` ignore; require core routes to be versioned in CI |
 | P1 | Deploy pulled mutable `latest`, checked only health status, and did not require CI | Run reusable CI first; deploy the exact commit image; wait for container health; verify API revision and an authentication-required route |
+| P1 | The API dependency lockfile was ignored, so CI and images resolved packages afresh | Version the Poetry lockfile consumed by the existing CI and Docker install steps |
 | P1 | Compose environment changes never reached an existing EC2 host | Render and transmit the current compose template on every release, validate it before replacement |
 | P1 | Backups copied only the old simulator DB and could miss committed WAL data | SQLite backup API snapshots every state DB; fresh temporary staging; update the scheduled backup through deployment |
 | P1 | Successful sign-ins consumed the failure allowance; stale CSRF could block later actions | Clear the email failure counter after password verification; refresh/retry a CSRF rejection once; keep the remote attempt cap |

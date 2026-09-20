@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install poetry==1.8.0
 
-COPY apps/api/pyproject.toml apps/api/poetry.lock* ./apps/api/
+COPY apps/api/pyproject.toml apps/api/poetry.lock ./apps/api/
 
 WORKDIR /app/apps/api
 RUN poetry config virtualenvs.create false \

@@ -121,6 +121,7 @@ Pipfile.lock
 
 # poetry
 poetry.lock
+!apps/api/poetry.lock
 
 # pdm
 .pdm.toml

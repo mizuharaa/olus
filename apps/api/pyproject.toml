@@ -8,8 +8,8 @@ package-mode = false
 
 # ── Runtime dependencies ──────────────────────────────────────────────────────
 #
-# Olus is a deterministic in-memory simulator (no DB, no queue, no auth, no
-# ML at runtime). The dependency surface mirrors that:
+# Olus combines an in-memory simulator with SQLite-backed accounts and runs.
+# SQLite, password hashing and worker coordination use the standard library.
 #
 #   - fastapi/uvicorn/pydantic  : HTTP + WS surface and config
 #   - ortools                   : CP-SAT solver in optimizer/milp.py

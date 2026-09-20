@@ -39,7 +39,7 @@
  * rendering four identical columns and letting them read as a broken query.
  */
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Check, X } from "lucide-react"
 import { useSimulationStore, type RecoveryPlan } from "@/stores/simulation"
@@ -79,7 +79,7 @@ const ROWS: Row[] = [
   },
   {
     key: "pax",
-    label: "Pax·min",
+    label: "Passenger-minutes",
     value: (p) => p.total_passenger_delay_minutes,
     render: (p) => compact(p.total_passenger_delay_minutes),
     rank: null,
@@ -98,14 +98,14 @@ const ROWS: Row[] = [
   },
   {
     key: "far117",
-    label: "FAR 117",
+    label: "Crew violations",
     value: (p) => p.crew_violations,
     render: (p) => String(p.crew_violations),
     rank: "lower",
   },
   {
     key: "cancels",
-    label: "Cancels",
+    label: "Cancellations",
     value: (p) => p.cancelled_flights.length,
     render: (p) => String(p.cancelled_flights.length),
     rank: null,
@@ -113,7 +113,7 @@ const ROWS: Row[] = [
   },
   {
     key: "delays",
-    label: "Delays",
+    label: "Delayed flights",
     value: (p) => p.delayed_flights.length,
     render: (p) => String(p.delayed_flights.length),
     rank: null,
@@ -235,7 +235,7 @@ function LegLedger({ plan }: { plan: RecoveryPlan }) {
           display: "grid",
           // Auto-fills to the width available, so the same ledger works at
           // 900px and at 1900px without a breakpoint.
-          gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
         }}
       >
         {legs.map((leg) => (
@@ -243,11 +243,11 @@ function LegLedger({ plan }: { plan: RecoveryPlan }) {
             key={leg.id}
             style={{
               display: "flex", alignItems: "center", gap: sp.xs,
-              height: 28, padding: `0 ${sp.sm}px`,
+              minHeight: 44, padding: `0 ${sp.sm}px`,
               borderRight: RULE, borderBottom: RULE,
             }}
           >
-            <span style={{ fontFamily: ff.mono, fontSize: 12, fontWeight: 600, color: c.ink }}>
+            <span style={{ fontFamily: ff.mono, fontSize: 14, fontWeight: 600, color: c.ink }}>
               {leg.id}
             </span>
             <span style={{ marginLeft: "auto" }}>
@@ -269,14 +269,17 @@ export function PlanCompareBoard({
   onInspect,
   onCommit,
   onClose,
+  busy=false,
 }: {
   inspectedId: string
   onInspect: (id: string) => void
   onCommit: (id: string | null) => void
   onClose: () => void
+  busy?: boolean
 }) {
   const { recoveryPlans, appliedPlanId, cascadeSummary } = useSimulationStore()
   const [armed, setArmed] = useState(false)
+  useEffect(() => setArmed(false), [inspectedId])
 
   const plans = recoveryPlans
   const inspected = plans.find((p) => p.plan_id === inspectedId) ?? plans[0]
@@ -347,7 +350,7 @@ export function PlanCompareBoard({
   if (!inspected) return null
 
   const isApplied = appliedPlanId === inspected.plan_id
-  const cols = `104px repeat(${plans.length}, minmax(0, 1fr))`
+  const cols = `160px repeat(${plans.length}, minmax(0, 1fr))`
 
   return (
     <motion.div style={{ height: "100%" }} {...wipe}>
@@ -512,11 +515,8 @@ export function PlanCompareBoard({
             fontFamily: ff.body, fontSize: 11.5, lineHeight: 1.5, color: c.muted, maxWidth: 760,
           }}
         >
-          <strong style={{ color: c.body, fontWeight: 600 }}>Underline = best in row.</strong>{" "}
-          Only Cost and FAR 117 are ranked. Pax·min, tCO₂e and Cancels are marked{" "}
-          <abbr title="Reported, not ranked" style={{ textDecoration: "none", color: c.borderStrong }}>*</abbr>{" "}
-          and reported without a winner, because cancelling a flight drives all three of them down at once —
-          ranking on them would crown whichever plan destroys the most schedule.
+          Underline: lowest cost or fewest crew violations. Other metrics are reported without ranking;
+          cancellations can reduce passenger-delay and emissions totals.
         </p>
 
         {/* ── What the inspected plan actually DOES ────────────────────────
@@ -548,7 +548,7 @@ export function PlanCompareBoard({
               <span role="alert" style={{ color: c.roseInk }}>
                 Commits {inspected.delayed_flights.length} delays,{" "}
                 {inspected.cancelled_flights.length} cancellations and{" "}
-                {inspected.crew_violations} FAR 117 flag{inspected.crew_violations === 1 ? "" : "s"} to the live
+                {inspected.crew_violations} FAR 117 flag{inspected.crew_violations === 1 ? "" : "s"} to the simulated
                 schedule. Click again to confirm.
               </span>
             ) : (
@@ -566,12 +566,14 @@ export function PlanCompareBoard({
             onCommit(inspected.plan_id)
           }}
           onKeyDown={(e) => { if (e.key === "Escape" && armed) { e.stopPropagation(); setArmed(false) } }}
+          disabled={busy||inspected.status==="infeasible"}
+          aria-busy={busy}
           className="ae-commit"
           aria-label={
             isApplied
               ? `Unapply plan ${inspected.plan_id}`
               : armed
-                ? `Confirm — commit plan ${inspected.plan_id} to the live schedule`
+                ? `Confirm — commit plan ${inspected.plan_id} to the simulated schedule`
                 : `Commit plan ${inspected.plan_id} — asks for confirmation first`
           }
           style={{

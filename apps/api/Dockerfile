@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN pip install poetry==1.8.0
 
-COPY apps/api/pyproject.toml apps/api/poetry.lock* ./apps/api/
+COPY apps/api/pyproject.toml apps/api/poetry.lock ./apps/api/
 
 WORKDIR /app/apps/api
 RUN poetry config virtualenvs.create false \
@@ -19,6 +19,8 @@ RUN poetry config virtualenvs.create false \
 # ── Stage 2: Production image ─────────────────────────────────────────────────
 FROM python:3.11-slim AS production
 WORKDIR /app
+ARG BUILD_SHA=local
+ENV BUILD_SHA=$BUILD_SHA
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl && rm -rf /var/lib/apt/lists/*

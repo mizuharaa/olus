@@ -56,8 +56,8 @@ export function machFor(gsKt: number, altFt: number): number | null {
 
 /** Dead-reckon a position forward along its track. Clamped to 180s — beyond
  *  that a straight-line extrapolation of a turning aircraft is fiction. */
-export function deadReckon(lat: number, lon: number, hdgDeg: number, velKt: number, sec: number): [number, number] {
-  const s = Math.min(Math.max(sec, 0), 180)
+export function deadReckon(lat: number, lon: number, hdgDeg: number, velKt: number, sec: number, maxSeconds = 180): [number, number] {
+  const s = Math.min(Math.max(sec, 0), maxSeconds)
   const distNm = velKt * (s / 3600)
   if (distNm < 0.0001) return [lat, lon]
   const R = 3440.065, d = distNm / R
@@ -126,7 +126,7 @@ export function deriveLive(f: LiveFlight) {
     if (!nearest || nm < nearest.nm) nearest = { icao, nm }
     const brg = bearing(f.lat, f.lon, ap.lat, ap.lon)
     const diff = Math.abs(((brg - hdg + 540) % 360) - 180)
-    if (diff < 55 && gs > 60) {
+    if (f.heading !== null && diff < 55 && gs > 60) {
       const etaMin = (nm / gs) * 60
       if (!ahead || nm < ahead.nm) ahead = { icao, nm, etaMin }
     }

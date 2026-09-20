@@ -3,12 +3,14 @@ Olus FastAPI application — entry point.
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.responses import JSONResponse
 
 from src.core.config import settings
 from src.data.adsb import AdsbClient
@@ -17,9 +19,23 @@ from src.data.opensky import OpenSkyClient
 from src.network import cache
 from src.optimizer.milp import RecoveryOptimizer
 from src.predictor.cascade import CascadePredictor
-from src.routes import agent, events, live, network, playtest, predict, recovery, simulator, weather
+from src.routes import (
+    account,
+    agent,
+    events,
+    live,
+    network,
+    playtest,
+    predict,
+    recovery,
+    runs,
+    scenario_workspaces,
+    simulator,
+    weather,
+)
 from src.routes.flights import router as flights_router
 from src.routes.passengers import router as passengers_router
+from src.services.run_manager import RunManager
 from src.simulator.engine import SimulationEngine
 from src.store.repository import ScenarioRepository, default_db_path
 from src.weather.client import WeatherClient
@@ -249,6 +265,10 @@ async def lifespan(app: FastAPI):
     app.state.engine = engine
     app.state.opensky = live_feed
     app.state.repository = repository
+    app.state.scenario_workspace_repository = scenario_workspaces.ScenarioWorkspaceRepository(
+        repo_path
+    )
+    app.state.run_manager = RunManager(default_db_path().with_name("olus-runs.db"))
 
     # Background tasks
     asyncio.create_task(weather_client.fetch_metars())
@@ -267,6 +287,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    app.state.run_manager.close()
     await weather_client.close()
     repository.close()
     logger.info("Olus API shut down cleanly")
@@ -294,6 +315,42 @@ app = FastAPI(
 # advertises gzip support. minimum_size avoids the overhead on tiny responses.
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
+
+@app.middleware("http")
+async def bound_public_demo_work(request: Request, call_next):
+    costly = request.method not in {"GET", "HEAD", "OPTIONS"} and request.url.path.startswith(
+        (
+            "/api/v1/events",
+            "/api/v1/simulator",
+            "/api/v1/recovery",
+            "/api/v1/network/stress-test",
+            "/api/v1/playtest",
+            "/api/v1/predict",
+        )
+    )
+    if settings.app_env != "production" or not costly:
+        return await call_next(request)
+    # ponytail: one shared public demo on one API process; use worker leases before scaling out.
+    if getattr(request.app.state, "public_demo_busy", False):
+        return JSONResponse(
+            {"detail": "The shared demo is busy. Retry shortly."},
+            status_code=429,
+            headers={"Retry-After": "5"},
+        )
+    allowed, retry_after = agent._take_token("public-demo")
+    if not allowed:
+        return JSONResponse(
+            {"detail": "The shared demo is cooling down. Retry shortly."},
+            status_code=429,
+            headers={"Retry-After": str(max(1, int(retry_after) + 1))},
+        )
+    request.app.state.public_demo_busy = True
+    try:
+        return await call_next(request)
+    finally:
+        request.app.state.public_demo_busy = False
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
@@ -305,6 +362,9 @@ app.add_middleware(
 # Include routers — flights_router must come before network.router because
 # network.router registers GET /flights/{flight_id} which would otherwise
 # shadow the explicit /flights/live and /flights/search routes.
+app.include_router(account.router, prefix="/api/v1")
+app.include_router(scenario_workspaces.router, prefix="/api/v1")
+app.include_router(runs.router, prefix="/api/v1")
 app.include_router(flights_router, prefix="/api/v1", tags=["flights"])
 app.include_router(network.router, prefix="/api/v1", tags=["network"])
 app.include_router(events.router, prefix="/api/v1", tags=["events"])
@@ -322,7 +382,8 @@ app.include_router(agent.router, prefix="/api/v1", tags=["agent"])
 async def not_found_handler(request: Request, exc):
     """A themed 404 for unknown API routes — a paper plane that missed its
     gate, rather than FastAPI's bare {"detail": "Not Found"}."""
-    from fastapi.responses import JSONResponse
+    if exc.detail != "Not Found":
+        return JSONResponse(status_code=404, content={"detail": exc.detail}, headers=exc.headers)
 
     return JSONResponse(
         status_code=404,
@@ -343,6 +404,7 @@ async def health(request: Request):
         "status": "ok",
         "service": "olus-api",
         "version": "0.2.0",
+        "revision": os.environ.get("BUILD_SHA", "local"),
         "opensky": opensky_status,
     }
 

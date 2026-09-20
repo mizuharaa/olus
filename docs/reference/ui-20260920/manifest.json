@@ -1,0 +1,278 @@
+{
+  "date": "2026-09-20",
+  "intent": "Research and implement a precise, accessible aviation operations dashboard layout for Olus.",
+  "ranking": "MCP supplies relevance matches, not popularity, ratings, release dates or performance measurements.",
+  "groups": {
+    "aviation": {
+      "query": "aviation flight tracking dashboard with a large map and a selected flight details panel",
+      "screens": [
+        {
+          "id": "a60c42b8-9aea-4d69-82eb-0b381b3fc9c4",
+          "image_url": "https://mobbin.com/api/mcp/short/MkyXaZX6",
+          "mobbin_url": "https://mobbin.com/screens/a60c42b8-9aea-4d69-82eb-0b381b3fc9c4",
+          "app_name": "KAYAK",
+          "platform": "web"
+        },
+        {
+          "id": "d010f35a-a593-4bde-8646-90474c5067a4",
+          "image_url": "https://mobbin.com/api/mcp/short/2H5mS9yy",
+          "mobbin_url": "https://mobbin.com/screens/d010f35a-a593-4bde-8646-90474c5067a4",
+          "app_name": "Better Stack",
+          "platform": "web"
+        },
+        {
+          "id": "a3f03288-4029-4633-a514-06f5ce4f5761",
+          "image_url": "https://mobbin.com/api/mcp/short/vaI4IuQp",
+          "mobbin_url": "https://mobbin.com/screens/a3f03288-4029-4633-a514-06f5ce4f5761",
+          "app_name": "Mindtrip",
+          "platform": "web"
+        }
+      ]
+    },
+    "navigation": {
+      "query": "dashboard top navigation with search, workspace switcher and account menu",
+      "screens": [
+        {
+          "id": "e470f040-82a2-44ec-8954-c70e56ce695b",
+          "image_url": "https://mobbin.com/api/mcp/short/WkWILeSD",
+          "mobbin_url": "https://mobbin.com/screens/e470f040-82a2-44ec-8954-c70e56ce695b",
+          "app_name": "Fibery",
+          "platform": "web"
+        },
+        {
+          "id": "e6ef30e7-d8d2-450f-b039-1fd1ccc0bdd3",
+          "image_url": "https://mobbin.com/api/mcp/short/AoTohjPq",
+          "mobbin_url": "https://mobbin.com/screens/e6ef30e7-d8d2-450f-b039-1fd1ccc0bdd3",
+          "app_name": "Webflow",
+          "platform": "web"
+        },
+        {
+          "id": "a6cc9c82-315c-40ef-bc5e-62fe158cdfff",
+          "image_url": "https://mobbin.com/api/mcp/short/ksaEtLVq",
+          "mobbin_url": "https://mobbin.com/screens/a6cc9c82-315c-40ef-bc5e-62fe158cdfff",
+          "app_name": "Asana",
+          "platform": "web"
+        }
+      ]
+    },
+    "analytics": {
+      "query": "analytics dashboard with aligned metric cards and a data table",
+      "screens": [
+        {
+          "id": "7bd07fc7-33e1-4ebd-8684-52112bb37050",
+          "image_url": "https://mobbin.com/api/mcp/short/7BnQLMrI",
+          "mobbin_url": "https://mobbin.com/screens/7bd07fc7-33e1-4ebd-8684-52112bb37050",
+          "app_name": "StackAI",
+          "platform": "web"
+        },
+        {
+          "id": "f6c1c1d1-fffc-49eb-a930-a48b4a5b3103",
+          "image_url": "https://mobbin.com/api/mcp/short/LQ8IsJHm",
+          "mobbin_url": "https://mobbin.com/screens/f6c1c1d1-fffc-49eb-a930-a48b4a5b3103",
+          "app_name": "Klaviyo",
+          "platform": "web"
+        },
+        {
+          "id": "4e5e24d5-edf6-4895-9a0c-b8634c37a34c",
+          "image_url": "https://mobbin.com/api/mcp/short/uxebMpPo",
+          "mobbin_url": "https://mobbin.com/screens/4e5e24d5-edf6-4895-9a0c-b8634c37a34c",
+          "app_name": "Mintlify",
+          "platform": "web"
+        }
+      ]
+    },
+    "toast": {
+      "query": "dashboard showing a success toast notification after saving changes",
+      "screens": [
+        {
+          "id": "513cdf3f-b769-4238-be13-b414e31279ef",
+          "image_url": "https://mobbin.com/api/mcp/short/xyUK1cM6",
+          "mobbin_url": "https://mobbin.com/screens/513cdf3f-b769-4238-be13-b414e31279ef",
+          "app_name": "Gamma",
+          "platform": "web"
+        },
+        {
+          "id": "986c056e-925a-49fb-b300-30a3f2ac8f7d",
+          "image_url": "https://mobbin.com/api/mcp/short/kbDKx0rN",
+          "mobbin_url": "https://mobbin.com/screens/986c056e-925a-49fb-b300-30a3f2ac8f7d",
+          "app_name": "Lovable",
+          "platform": "web"
+        },
+        {
+          "id": "51895887-f33f-42f7-a85f-1c6c6721626f",
+          "image_url": "https://mobbin.com/api/mcp/short/OBfMy8yx",
+          "mobbin_url": "https://mobbin.com/screens/51895887-f33f-42f7-a85f-1c6c6721626f",
+          "app_name": "Origin",
+          "platform": "web"
+        }
+      ]
+    },
+    "tables": {
+      "query": "Linear dashboard with issue list, top toolbar, filters and a right side details panel",
+      "screens": [
+        {
+          "id": "63a8a72a-c47e-4f1d-90b4-5cd7b99ec799",
+          "image_url": "https://mobbin.com/api/mcp/short/Fyq7sWtI",
+          "mobbin_url": "https://mobbin.com/screens/63a8a72a-c47e-4f1d-90b4-5cd7b99ec799",
+          "app_name": "Height",
+          "platform": "web"
+        },
+        {
+          "id": "f65719b7-eafe-4246-be7e-e3afd0b8da07",
+          "image_url": "https://mobbin.com/api/mcp/short/hInuLsb9",
+          "mobbin_url": "https://mobbin.com/screens/f65719b7-eafe-4246-be7e-e3afd0b8da07",
+          "app_name": "Airtable",
+          "platform": "web"
+        }
+      ]
+    },
+    "sections": {
+      "query": "navigation header with product links, dropdown menu and account sign in",
+      "page": 1,
+      "has_next_page": true,
+      "sections": [
+        {
+          "id": "650d948a-d6fe-47dc-8332-f3639148b176",
+          "image_url": "https://mobbin.com/api/mcp/short/33qAg60x",
+          "mobbin_url": "https://mobbin.com/sites/sections/650d948a-d6fe-47dc-8332-f3639148b176",
+          "site_name": "Intercom"
+        },
+        {
+          "id": "28c2f772-c177-4a07-82f5-96b0aefca614",
+          "image_url": "https://mobbin.com/api/mcp/short/RFteMVtE",
+          "mobbin_url": "https://mobbin.com/sites/sections/28c2f772-c177-4a07-82f5-96b0aefca614",
+          "site_name": "Square"
+        },
+        {
+          "id": "df6f47be-606e-488d-b2c9-a3fe010d35b9",
+          "image_url": "https://mobbin.com/api/mcp/short/R2CS2Pjt",
+          "mobbin_url": "https://mobbin.com/sites/sections/df6f47be-606e-488d-b2c9-a3fe010d35b9",
+          "site_name": "AngelList"
+        }
+      ]
+    },
+    "keys": {
+      "query": "creating and copying an API key in account settings",
+      "page": 1,
+      "has_next_page": true,
+      "flows": [
+        {
+          "id": "c64b59bd-31c2-43e5-a4af-175c6d56338e",
+          "name": "Creating an API key",
+          "actions": [
+            "Adding & Creating",
+            "Selecting & Choosing"
+          ],
+          "mobbin_url": "https://mobbin.com/flows/c64b59bd-31c2-43e5-a4af-175c6d56338e",
+          "app_name": "Klaviyo",
+          "platform": "web",
+          "screen_count": 7,
+          "screens": [
+            {
+              "screen_id": "59bad7f1-7f4a-470c-88d8-5932a1242b28",
+              "image_url": "https://mobbin.com/api/mcp/short/rpnBpRoM",
+              "position": 1
+            },
+            {
+              "screen_id": "8de1245b-a5f7-4933-9658-48f496113ead",
+              "image_url": "https://mobbin.com/api/mcp/short/HBztbhZz",
+              "position": 2
+            },
+            {
+              "screen_id": "28adaaef-12c2-4d4a-af45-2d60228aa2be",
+              "image_url": "https://mobbin.com/api/mcp/short/W1iwSxdC",
+              "position": 3
+            },
+            {
+              "screen_id": "ffab6a53-b6bc-4272-a82d-0242c549826c",
+              "image_url": "https://mobbin.com/api/mcp/short/xHlVq4ah",
+              "position": 4
+            },
+            {
+              "screen_id": "c8467a37-535a-4a42-9b1c-f954cb8618e0",
+              "image_url": "https://mobbin.com/api/mcp/short/1TBE4rng",
+              "position": 5
+            },
+            {
+              "screen_id": "b7d16c25-d410-46e7-98be-9bdaeabdef77",
+              "image_url": "https://mobbin.com/api/mcp/short/b5stuyhp",
+              "position": 6
+            },
+            {
+              "screen_id": "8347fd48-a6b9-402c-8267-6a16b8e0808d",
+              "image_url": "https://mobbin.com/api/mcp/short/ak9T1mzc",
+              "position": 7
+            }
+          ]
+        },
+        {
+          "id": "a5556e09-0139-4611-983f-840ccd687b3e",
+          "name": "Generating a token",
+          "actions": [
+            "Adding & Creating",
+            "Copying & Duplicating"
+          ],
+          "mobbin_url": "https://mobbin.com/flows/a5556e09-0139-4611-983f-840ccd687b3e",
+          "app_name": "Perplexity",
+          "platform": "web",
+          "screen_count": 3,
+          "screens": [
+            {
+              "screen_id": "1e5e57dd-91c4-49e3-b95a-cfffb444d618",
+              "image_url": "https://mobbin.com/api/mcp/short/ijHKLjIF",
+              "position": 1
+            },
+            {
+              "screen_id": "0983ef65-bcf3-4524-8f49-28f29735d2a9",
+              "image_url": "https://mobbin.com/api/mcp/short/yFohjA74",
+              "position": 2
+            },
+            {
+              "screen_id": "66504dae-3d4c-4592-9866-bb2eeb5b993b",
+              "image_url": "https://mobbin.com/api/mcp/short/uINpPkzA",
+              "position": 3
+            }
+          ]
+        }
+      ]
+    },
+    "setup": {
+      "query": "multi step setup form with progress steps, field labels and continue button",
+      "screens": [
+        {
+          "id": "44d70382-9b3b-4888-a593-175c9efb542d",
+          "image_url": "https://mobbin.com/api/mcp/short/Bl9wPAOE",
+          "mobbin_url": "https://mobbin.com/screens/44d70382-9b3b-4888-a593-175c9efb542d",
+          "app_name": "Lightfield",
+          "platform": "web"
+        },
+        {
+          "id": "19895879-3d36-4311-acac-65f7c5809adf",
+          "image_url": "https://mobbin.com/api/mcp/short/FVa94Nzb",
+          "mobbin_url": "https://mobbin.com/screens/19895879-3d36-4311-acac-65f7c5809adf",
+          "app_name": "Navattic",
+          "platform": "web"
+        }
+      ]
+    },
+    "empty": {
+      "query": "dashboard empty state with a create project action and loading or error feedback",
+      "screens": [
+        {
+          "id": "5c465bd2-580a-450d-b921-6b6a19fd1f06",
+          "image_url": "https://mobbin.com/api/mcp/short/8Pdg4EZm",
+          "mobbin_url": "https://mobbin.com/screens/5c465bd2-580a-450d-b921-6b6a19fd1f06",
+          "app_name": "Microsoft Copilot",
+          "platform": "web"
+        },
+        {
+          "id": "131f6ec6-eeb4-4d4a-9bfd-710869658d1b",
+          "image_url": "https://mobbin.com/api/mcp/short/fQqA6uYl",
+          "mobbin_url": "https://mobbin.com/screens/131f6ec6-eeb4-4d4a-9bfd-710869658d1b",
+          "app_name": "Frame.io",
+          "platform": "web"
+        }
+      ]
+    }
+  }
+}

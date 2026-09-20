@@ -1,5 +1,10 @@
 # Design — Olus
 
+## Current dashboard direction: Floating tools (2026-09-16)
+
+User selected Floating tools from `/design-review`. This supersedes older console surface decisions below: full-screen map, independently collapsible floating event/inspection/recovery/timeline panels, 8px corners, 1px neutral boundaries, no decorative colored stripes or layered shadows. Neutral selection and short 160ms color transitions; semantic color remains on operational states and keyboard focus. Keep 48px event rows and readable body text. Preserve all existing operations, 3D aircraft, financial plans A/B/C/D and map interactions. Implementation: `apps/web/components/workspace/operations.module.css`. Older dated decisions remain historical context.
+
+
 A locked design system for this app. Every page redesign reads this file before
 emitting code. Do not regenerate per page — extend or amend this file when the
 system needs to grow.

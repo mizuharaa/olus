@@ -32,6 +32,7 @@ class LiveFlightFeed:
         self._last_fetch_attempt: float = 0.0  # last attempt (success or failure)
         self._lock = asyncio.Lock()
         self._last_error: Optional[str] = None
+        self._refresh_task: asyncio.Task | None = None
 
     # ── Provider hook ─────────────────────────────────────────────────────────
 
@@ -67,7 +68,12 @@ class LiveFlightFeed:
         # Stale non-empty cache — return now, refresh in background.
         if self._cache and not force:
             logger.debug("feed: stale cache (%ds old) — refreshing in background", int(age))
-            asyncio.create_task(self._do_refresh())
+            if (
+                not self._lock.locked()
+                and attempt_age >= ATTEMPT_GATE_SEC
+                and (self._refresh_task is None or self._refresh_task.done())
+            ):
+                self._refresh_task = asyncio.create_task(self._do_refresh())
             return self._cache
 
         # Empty cache but we tried recently — return [] rather than blocking.
@@ -76,6 +82,8 @@ class LiveFlightFeed:
             return []
 
         # Must fetch synchronously (first call or forced).
+        if not force and self._lock.locked():
+            return self._cache
         async with self._lock:
             # Re-check after acquiring lock.
             now = time.monotonic()
@@ -92,6 +100,11 @@ class LiveFlightFeed:
     async def _do_refresh(self) -> None:
         """Background cache refresh — holds the write lock while fetching."""
         async with self._lock:
+            now = time.monotonic()
+            if now - self._last_fetch_attempt < ATTEMPT_GATE_SEC:
+                return
+            if self._cache and now - self._cache_ts < self._cache_ttl:
+                return
             await self._refresh_locked()
 
     async def _refresh_locked(self) -> None:

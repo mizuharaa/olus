@@ -10,6 +10,7 @@ import { OlusLogo } from "@/components/ds/logo"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { apiClient } from "@/lib/api"
+import { preserveLoadedScenario } from "@/lib/workspace-handoff"
 import { toast } from "sonner"
 
 const SCENARIOS = [
@@ -34,6 +35,7 @@ export default function ScenariosPage() {
     setLoading(name)
     try {
       await apiClient.post(`/simulator/scenarios/${name}/load`)
+      preserveLoadedScenario()
       toast.success("Scenario loaded", { description: "Redirecting to simulator..." })
       router.push("/simulator")
     } catch (err: any) {

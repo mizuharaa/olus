@@ -1,0 +1,784 @@
+[
+  {
+    "name": "intercom",
+    "url": "https://www.intercom.com/",
+    "title": "Intercom | A complete system for human and AI customer service",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "samples": [
+      {
+        "tag": "HEADER",
+        "text": "Log inContact salesView demoStart free trialFin AI Agent→ProductCustom",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 66
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px",
+        "gap": "normal",
+        "borderRadius": "0px",
+        "display": "block",
+        "alignItems": "normal",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "NAV",
+        "text": "ProductCustomersResourcesPricingLog inContact salesView demoStart free",
+        "rect": {
+          "x": 12,
+          "y": 13,
+          "width": 1416,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px",
+        "gap": "normal",
+        "borderRadius": "0px",
+        "display": "block",
+        "alignItems": "normal",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "",
+        "rect": {
+          "x": 12,
+          "y": 13,
+          "width": 129.5625,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px",
+        "gap": "normal",
+        "borderRadius": "0px",
+        "display": "block",
+        "alignItems": "normal",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Product",
+        "rect": {
+          "x": 151.5625,
+          "y": 13,
+          "width": 83.828125,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 4px 0px 12px",
+        "gap": "4px",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "Customers",
+        "rect": {
+          "x": 235.390625,
+          "y": 13,
+          "width": 92.546875,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Resources",
+        "rect": {
+          "x": 327.9375,
+          "y": 13,
+          "width": 99.484375,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 4px 0px 12px",
+        "gap": "4px",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "Pricing",
+        "rect": {
+          "x": 427.421875,
+          "y": 13,
+          "width": 67.359375,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "Log in",
+        "rect": {
+          "x": 926.484375,
+          "y": 13,
+          "width": 61.515625,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "Contact sales",
+        "rect": {
+          "x": 988,
+          "y": 13,
+          "width": 108.515625,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "View demo",
+        "rect": {
+          "x": 1096.515625,
+          "y": 13,
+          "width": 93.5625,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "Start free trial",
+        "rect": {
+          "x": 1190.078125,
+          "y": 13,
+          "width": 107.734375,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "14px",
+        "lineHeight": "15.4px",
+        "padding": "0px 12px",
+        "gap": "4px",
+        "borderRadius": "4px",
+        "display": "inline-flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "A",
+        "text": "Fin AI Agent→",
+        "rect": {
+          "x": 1317.8125,
+          "y": 13,
+          "width": 110.1875,
+          "height": 40
+        },
+        "font": "Saans, \"Saans Fallback\", \"Hiragino Kaku Gothic ProN\", \"Hiragino Sans\", \"Yu Gothic UI\", \"Yu Gothic\", Meiryo, \"Noto Sans JP\", ui-sans-serif, system-ui, sans-serif",
+        "fontSize": "14px",
+        "lineHeight": "15.4px",
+        "padding": "0px 12px",
+        "gap": "4px",
+        "borderRadius": "4px",
+        "display": "inline-flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      }
+    ]
+  },
+  {
+    "name": "linear",
+    "url": "https://linear.app/",
+    "title": "Linear – The system for product development",
+    "viewport": {
+      "width": 1440,
+      "height": 1000
+    },
+    "samples": [
+      {
+        "tag": "HEADER",
+        "text": "ProductResourcesCustomersPricingNowContactDocsOpen appLog inSign up",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 73
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px",
+        "gap": "normal",
+        "borderRadius": "0px",
+        "display": "block",
+        "alignItems": "normal",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "NAV",
+        "text": "ProductResourcesCustomersPricingNowContactDocsOpen appLog inSign up",
+        "rect": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 72
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px",
+        "gap": "normal",
+        "borderRadius": "0px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "A",
+        "text": "",
+        "rect": {
+          "x": 71,
+          "y": 20,
+          "width": 104,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "0px 8px",
+        "gap": "normal",
+        "borderRadius": "6px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "flex-start"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Product",
+        "rect": {
+          "x": 741,
+          "y": 20,
+          "width": 72.109375,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Resources",
+        "rect": {
+          "x": 813.109375,
+          "y": 20,
+          "width": 88.65625,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "A",
+        "text": "Customers",
+        "rect": {
+          "x": 901.765625,
+          "y": 20,
+          "width": 90.703125,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "A",
+        "text": "Pricing",
+        "rect": {
+          "x": 992.46875,
+          "y": 20,
+          "width": 66.703125,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "A",
+        "text": "Now",
+        "rect": {
+          "x": 1059.171875,
+          "y": 20,
+          "width": 52,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "A",
+        "text": "Contact",
+        "rect": {
+          "x": 1111.171875,
+          "y": 20,
+          "width": 72.28125,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "A",
+        "text": "Log in",
+        "rect": {
+          "x": 1218.46875,
+          "y": 20,
+          "width": 61.609375,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "19.5px",
+        "padding": "0px 12px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "A",
+        "text": "Sign up",
+        "rect": {
+          "x": 1288.078125,
+          "y": 20,
+          "width": 72.921875,
+          "height": 32
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "32px",
+        "padding": "0px 12px",
+        "gap": "8px",
+        "borderRadius": "9999px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "center"
+      },
+      {
+        "tag": "NAV",
+        "text": "LinearPulseInboxMy issuesReviewsWorkspace InitiativesProjectsMoreFavor",
+        "rect": {
+          "x": 68,
+          "y": 535,
+          "width": 232,
+          "height": 704
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "16px",
+        "lineHeight": "24px",
+        "padding": "8px 16px 16px 8px",
+        "gap": "normal",
+        "borderRadius": "0px",
+        "display": "block",
+        "alignItems": "normal",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Linear",
+        "rect": {
+          "x": 76,
+          "y": 543,
+          "width": 97.015625,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13.3333px",
+        "lineHeight": "normal",
+        "padding": "0px 4px",
+        "gap": "6px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "",
+        "rect": {
+          "x": 222,
+          "y": 543,
+          "width": 28,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13.3333px",
+        "lineHeight": "normal",
+        "padding": "0px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "grid",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "",
+        "rect": {
+          "x": 256,
+          "y": 543,
+          "width": 28,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13.3333px",
+        "lineHeight": "normal",
+        "padding": "0px",
+        "gap": "normal",
+        "borderRadius": "9999px",
+        "display": "grid",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Pulse",
+        "rect": {
+          "x": 76,
+          "y": 587,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Inbox",
+        "rect": {
+          "x": 76,
+          "y": 617,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "My issues",
+        "rect": {
+          "x": 76,
+          "y": 647,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Reviews",
+        "rect": {
+          "x": 76,
+          "y": 677,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Workspace",
+        "rect": {
+          "x": 76,
+          "y": 721,
+          "width": 208,
+          "height": 24
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "12px",
+        "lineHeight": "14px",
+        "padding": "4px 0px 4px 6px",
+        "gap": "0px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Initiatives",
+        "rect": {
+          "x": 76,
+          "y": 745,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Projects",
+        "rect": {
+          "x": 76,
+          "y": 775,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "More",
+        "rect": {
+          "x": 76,
+          "y": 805,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Favorites",
+        "rect": {
+          "x": 76,
+          "y": 849,
+          "width": 208,
+          "height": 24
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "12px",
+        "lineHeight": "14px",
+        "padding": "4px 0px 4px 6px",
+        "gap": "0px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Faster app launch",
+        "rect": {
+          "x": 76,
+          "y": 873,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Agent tasks",
+        "rect": {
+          "x": 76,
+          "y": 903,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "Agent Insights",
+        "rect": {
+          "x": 76,
+          "y": 933,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      },
+      {
+        "tag": "BUTTON",
+        "text": "UI Refresh",
+        "rect": {
+          "x": 76,
+          "y": 963,
+          "width": 208,
+          "height": 28
+        },
+        "font": "\"Inter Variable\", \"SF Pro Display\", -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, \"Open Sans\", \"Helvetica Neue\", sans-serif",
+        "fontSize": "13px",
+        "lineHeight": "normal",
+        "padding": "0px 7px",
+        "gap": "8px",
+        "borderRadius": "8px",
+        "display": "flex",
+        "alignItems": "center",
+        "justifyContent": "normal"
+      }
+    ]
+  }
+]

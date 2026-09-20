@@ -1,0 +1,1888 @@
+{
+  "passed": true,
+  "measurements": [
+    {
+      "width": 320,
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 320,
+        "height": 105,
+        "right": 320,
+        "bottom": 105
+      },
+      "nav": {
+        "x": 12,
+        "y": 56,
+        "width": 296,
+        "height": 48,
+        "right": 308,
+        "bottom": 104
+      },
+      "toolbar": {
+        "x": 12,
+        "y": 117,
+        "width": 296,
+        "height": 166,
+        "right": 308,
+        "bottom": 283
+      },
+      "preview": {
+        "x": 12,
+        "y": 291,
+        "width": 296,
+        "height": 54,
+        "right": 308,
+        "bottom": 345
+      },
+      "events": null,
+      "recovery": null,
+      "links": [
+        {
+          "text": "Operations",
+          "height": 48,
+          "width": 80.609375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Scenarios",
+          "height": 48,
+          "width": 73.859375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Account & API keys",
+          "height": 48,
+          "width": 136.890625,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Events 1",
+          "height": 44,
+          "width": 78.09375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Recovery 4",
+          "height": 44,
+          "width": 96.015625,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Back to demo",
+          "height": 44,
+          "width": 108.8125,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "opened": {
+        "width": 320,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 105,
+          "right": 320,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 12,
+          "y": 56,
+          "width": 296,
+          "height": 48,
+          "right": 308,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 12,
+          "y": 117,
+          "width": 296,
+          "height": 166,
+          "right": 308,
+          "bottom": 283
+        },
+        "preview": {
+          "x": 12,
+          "y": 291,
+          "width": 296,
+          "height": 54,
+          "right": 308,
+          "bottom": 345
+        },
+        "events": {
+          "x": 12,
+          "y": 353,
+          "width": 296,
+          "height": 391,
+          "right": 308,
+          "bottom": 744
+        },
+        "recovery": null,
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 80.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 73.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 136.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 78.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 96.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 108.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      },
+      "compared": {
+        "width": 320,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 320,
+          "height": 105,
+          "right": 320,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 12,
+          "y": 56,
+          "width": 296,
+          "height": 48,
+          "right": 308,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 12,
+          "y": 117,
+          "width": 296,
+          "height": 166,
+          "right": 308,
+          "bottom": 283
+        },
+        "preview": {
+          "x": 12,
+          "y": 291,
+          "width": 296,
+          "height": 54,
+          "right": 308,
+          "bottom": 345
+        },
+        "events": null,
+        "recovery": {
+          "x": 12,
+          "y": 353,
+          "width": 296,
+          "height": 505,
+          "right": 308,
+          "bottom": 858
+        },
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 80.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 73.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 136.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 78.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 96.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 108.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 390,
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 390,
+        "height": 105,
+        "right": 390,
+        "bottom": 105
+      },
+      "nav": {
+        "x": 12,
+        "y": 56,
+        "width": 366,
+        "height": 48,
+        "right": 378,
+        "bottom": 104
+      },
+      "toolbar": {
+        "x": 12,
+        "y": 117,
+        "width": 366,
+        "height": 114,
+        "right": 378,
+        "bottom": 231
+      },
+      "preview": {
+        "x": 12,
+        "y": 239,
+        "width": 366,
+        "height": 54,
+        "right": 378,
+        "bottom": 293
+      },
+      "events": null,
+      "recovery": null,
+      "links": [
+        {
+          "text": "Operations",
+          "height": 48,
+          "width": 80.609375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Scenarios",
+          "height": 48,
+          "width": 73.859375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Account & API keys",
+          "height": 48,
+          "width": 136.890625,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Events 1",
+          "height": 44,
+          "width": 78.09375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Recovery 4",
+          "height": 44,
+          "width": 96.015625,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Back to demo",
+          "height": 44,
+          "width": 108.8125,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "opened": {
+        "width": 390,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 105,
+          "right": 390,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 12,
+          "y": 56,
+          "width": 366,
+          "height": 48,
+          "right": 378,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 12,
+          "y": 117,
+          "width": 366,
+          "height": 114,
+          "right": 378,
+          "bottom": 231
+        },
+        "preview": {
+          "x": 12,
+          "y": 239,
+          "width": 366,
+          "height": 54,
+          "right": 378,
+          "bottom": 293
+        },
+        "events": {
+          "x": 12,
+          "y": 301,
+          "width": 366,
+          "height": 443,
+          "right": 378,
+          "bottom": 744
+        },
+        "recovery": null,
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 80.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 73.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 136.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 78.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 96.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 108.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      },
+      "compared": {
+        "width": 390,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 390,
+          "height": 105,
+          "right": 390,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 12,
+          "y": 56,
+          "width": 366,
+          "height": 48,
+          "right": 378,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 12,
+          "y": 117,
+          "width": 366,
+          "height": 114,
+          "right": 378,
+          "bottom": 231
+        },
+        "preview": {
+          "x": 12,
+          "y": 239,
+          "width": 366,
+          "height": 54,
+          "right": 378,
+          "bottom": 293
+        },
+        "events": null,
+        "recovery": {
+          "x": 12,
+          "y": 338,
+          "width": 366,
+          "height": 520,
+          "right": 378,
+          "bottom": 858
+        },
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 80.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 73.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 136.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 78.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 96.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 108.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 768,
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 768,
+        "height": 105,
+        "right": 768,
+        "bottom": 105
+      },
+      "nav": {
+        "x": 196.8125,
+        "y": 56,
+        "width": 374.359375,
+        "height": 48,
+        "right": 571.171875,
+        "bottom": 104
+      },
+      "toolbar": {
+        "x": 16,
+        "y": 121,
+        "width": 592,
+        "height": 122,
+        "right": 608,
+        "bottom": 243
+      },
+      "preview": {
+        "x": 137.859375,
+        "y": 255,
+        "width": 492.265625,
+        "height": 62,
+        "right": 630.125,
+        "bottom": 317
+      },
+      "events": null,
+      "recovery": null,
+      "links": [
+        {
+          "text": "Operations",
+          "height": 48,
+          "width": 115.609375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Scenarios",
+          "height": 48,
+          "width": 81.859375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Account & API keys",
+          "height": 48,
+          "width": 144.890625,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Events 1",
+          "height": 44,
+          "width": 90.09375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Recovery 4",
+          "height": 44,
+          "width": 108.015625,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Back to demo",
+          "height": 44,
+          "width": 120.8125,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "opened": {
+        "width": 768,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 105,
+          "right": 768,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 196.8125,
+          "y": 56,
+          "width": 374.359375,
+          "height": 48,
+          "right": 571.171875,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 16,
+          "y": 121,
+          "width": 592,
+          "height": 122,
+          "right": 608,
+          "bottom": 243
+        },
+        "preview": {
+          "x": 137.859375,
+          "y": 255,
+          "width": 492.265625,
+          "height": 62,
+          "right": 630.125,
+          "bottom": 317
+        },
+        "events": {
+          "x": 16,
+          "y": 329,
+          "width": 380,
+          "height": 391,
+          "right": 396,
+          "bottom": 720
+        },
+        "recovery": null,
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      },
+      "compared": {
+        "width": 768,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 768,
+          "height": 105,
+          "right": 768,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 196.8125,
+          "y": 56,
+          "width": 374.359375,
+          "height": 48,
+          "right": 571.171875,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 16,
+          "y": 121,
+          "width": 592,
+          "height": 122,
+          "right": 608,
+          "bottom": 243
+        },
+        "preview": {
+          "x": 137.859375,
+          "y": 255,
+          "width": 492.265625,
+          "height": 62,
+          "right": 630.125,
+          "bottom": 317
+        },
+        "events": null,
+        "recovery": {
+          "x": 16,
+          "y": 334,
+          "width": 736,
+          "height": 520,
+          "right": 752,
+          "bottom": 854
+        },
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 1024,
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1024,
+        "height": 105,
+        "right": 1024,
+        "bottom": 105
+      },
+      "nav": {
+        "x": 324.8125,
+        "y": 56,
+        "width": 374.359375,
+        "height": 48,
+        "right": 699.171875,
+        "bottom": 104
+      },
+      "toolbar": {
+        "x": 16,
+        "y": 121,
+        "width": 848,
+        "height": 70,
+        "right": 864,
+        "bottom": 191
+      },
+      "preview": {
+        "x": 265.859375,
+        "y": 203,
+        "width": 492.265625,
+        "height": 62,
+        "right": 758.125,
+        "bottom": 265
+      },
+      "events": null,
+      "recovery": null,
+      "links": [
+        {
+          "text": "Operations",
+          "height": 48,
+          "width": 115.609375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Scenarios",
+          "height": 48,
+          "width": 81.859375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Account & API keys",
+          "height": 48,
+          "width": 144.890625,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Events 1",
+          "height": 44,
+          "width": 90.09375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Recovery 4",
+          "height": 44,
+          "width": 108.015625,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Back to demo",
+          "height": 44,
+          "width": 120.8125,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "opened": {
+        "width": 1024,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 105,
+          "right": 1024,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 324.8125,
+          "y": 56,
+          "width": 374.359375,
+          "height": 48,
+          "right": 699.171875,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 16,
+          "y": 121,
+          "width": 848,
+          "height": 70,
+          "right": 864,
+          "bottom": 191
+        },
+        "preview": {
+          "x": 265.859375,
+          "y": 203,
+          "width": 492.265625,
+          "height": 62,
+          "right": 758.125,
+          "bottom": 265
+        },
+        "events": {
+          "x": 16,
+          "y": 277,
+          "width": 380,
+          "height": 443,
+          "right": 396,
+          "bottom": 720
+        },
+        "recovery": null,
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      },
+      "compared": {
+        "width": 1024,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1024,
+          "height": 105,
+          "right": 1024,
+          "bottom": 105
+        },
+        "nav": {
+          "x": 324.8125,
+          "y": 56,
+          "width": 374.359375,
+          "height": 48,
+          "right": 699.171875,
+          "bottom": 104
+        },
+        "toolbar": {
+          "x": 16,
+          "y": 121,
+          "width": 848,
+          "height": 70,
+          "right": 864,
+          "bottom": 191
+        },
+        "preview": {
+          "x": 265.859375,
+          "y": 203,
+          "width": 492.265625,
+          "height": 62,
+          "right": 758.125,
+          "bottom": 265
+        },
+        "events": null,
+        "recovery": {
+          "x": 16,
+          "y": 334,
+          "width": 992,
+          "height": 520,
+          "right": 1008,
+          "bottom": 854
+        },
+        "links": [
+          {
+            "text": "Operations",
+            "height": 48,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 48,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 48,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 1280,
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 64,
+        "right": 1280,
+        "bottom": 64
+      },
+      "nav": {
+        "x": 452.8125,
+        "y": 0,
+        "width": 374.359375,
+        "height": 63,
+        "right": 827.171875,
+        "bottom": 63
+      },
+      "toolbar": {
+        "x": 24,
+        "y": 80,
+        "width": 1088,
+        "height": 76,
+        "right": 1112,
+        "bottom": 156
+      },
+      "preview": {
+        "x": 393.859375,
+        "y": 168,
+        "width": 492.265625,
+        "height": 62,
+        "right": 886.125,
+        "bottom": 230
+      },
+      "events": null,
+      "recovery": null,
+      "links": [
+        {
+          "text": "Operations",
+          "height": 63,
+          "width": 115.609375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Scenarios",
+          "height": 63,
+          "width": 81.859375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Account & API keys",
+          "height": 63,
+          "width": 144.890625,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Events 1",
+          "height": 44,
+          "width": 90.09375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Recovery 4",
+          "height": 44,
+          "width": 108.015625,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Back to demo",
+          "height": 44,
+          "width": 120.8125,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "opened": {
+        "width": 1280,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 64,
+          "right": 1280,
+          "bottom": 64
+        },
+        "nav": {
+          "x": 452.8125,
+          "y": 0,
+          "width": 374.359375,
+          "height": 63,
+          "right": 827.171875,
+          "bottom": 63
+        },
+        "toolbar": {
+          "x": 24,
+          "y": 80,
+          "width": 1088,
+          "height": 76,
+          "right": 1112,
+          "bottom": 156
+        },
+        "preview": {
+          "x": 393.859375,
+          "y": 168,
+          "width": 492.265625,
+          "height": 62,
+          "right": 886.125,
+          "bottom": 230
+        },
+        "events": {
+          "x": 24,
+          "y": 242,
+          "width": 360,
+          "height": 478,
+          "right": 384,
+          "bottom": 720
+        },
+        "recovery": null,
+        "links": [
+          {
+            "text": "Operations",
+            "height": 63,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 63,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 63,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      },
+      "compared": {
+        "width": 1280,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1280,
+          "height": 64,
+          "right": 1280,
+          "bottom": 64
+        },
+        "nav": {
+          "x": 452.8125,
+          "y": 0,
+          "width": 374.359375,
+          "height": 63,
+          "right": 827.171875,
+          "bottom": 63
+        },
+        "toolbar": {
+          "x": 24,
+          "y": 80,
+          "width": 1088,
+          "height": 76,
+          "right": 1112,
+          "bottom": 156
+        },
+        "preview": {
+          "x": 393.859375,
+          "y": 168,
+          "width": 492.265625,
+          "height": 62,
+          "right": 886.125,
+          "bottom": 230
+        },
+        "events": {
+          "x": 24,
+          "y": 242,
+          "width": 360,
+          "height": 588,
+          "right": 384,
+          "bottom": 830
+        },
+        "recovery": {
+          "x": 396,
+          "y": 334,
+          "width": 860,
+          "height": 520,
+          "right": 1256,
+          "bottom": 854
+        },
+        "links": [
+          {
+            "text": "Operations",
+            "height": 63,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 63,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 63,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 1440,
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1440,
+        "height": 64,
+        "right": 1440,
+        "bottom": 64
+      },
+      "nav": {
+        "x": 532.8125,
+        "y": 0,
+        "width": 374.359375,
+        "height": 63,
+        "right": 907.171875,
+        "bottom": 63
+      },
+      "toolbar": {
+        "x": 24,
+        "y": 80,
+        "width": 1248,
+        "height": 76,
+        "right": 1272,
+        "bottom": 156
+      },
+      "preview": {
+        "x": 473.859375,
+        "y": 168,
+        "width": 492.265625,
+        "height": 62,
+        "right": 966.125,
+        "bottom": 230
+      },
+      "events": null,
+      "recovery": null,
+      "links": [
+        {
+          "text": "Operations",
+          "height": 63,
+          "width": 115.609375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Scenarios",
+          "height": 63,
+          "width": 81.859375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Account & API keys",
+          "height": 63,
+          "width": 144.890625,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Events 1",
+          "height": 44,
+          "width": 90.09375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Recovery 4",
+          "height": 44,
+          "width": 108.015625,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Back to demo",
+          "height": 44,
+          "width": 120.8125,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "opened": {
+        "width": 1440,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 64,
+          "right": 1440,
+          "bottom": 64
+        },
+        "nav": {
+          "x": 532.8125,
+          "y": 0,
+          "width": 374.359375,
+          "height": 63,
+          "right": 907.171875,
+          "bottom": 63
+        },
+        "toolbar": {
+          "x": 24,
+          "y": 80,
+          "width": 1248,
+          "height": 76,
+          "right": 1272,
+          "bottom": 156
+        },
+        "preview": {
+          "x": 473.859375,
+          "y": 168,
+          "width": 492.265625,
+          "height": 62,
+          "right": 966.125,
+          "bottom": 230
+        },
+        "events": {
+          "x": 24,
+          "y": 242,
+          "width": 360,
+          "height": 478,
+          "right": 384,
+          "bottom": 720
+        },
+        "recovery": null,
+        "links": [
+          {
+            "text": "Operations",
+            "height": 63,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 63,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 63,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      },
+      "compared": {
+        "width": 1440,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1440,
+          "height": 64,
+          "right": 1440,
+          "bottom": 64
+        },
+        "nav": {
+          "x": 532.8125,
+          "y": 0,
+          "width": 374.359375,
+          "height": 63,
+          "right": 907.171875,
+          "bottom": 63
+        },
+        "toolbar": {
+          "x": 24,
+          "y": 80,
+          "width": 1248,
+          "height": 76,
+          "right": 1272,
+          "bottom": 156
+        },
+        "preview": {
+          "x": 473.859375,
+          "y": 168,
+          "width": 492.265625,
+          "height": 62,
+          "right": 966.125,
+          "bottom": 230
+        },
+        "events": {
+          "x": 24,
+          "y": 242,
+          "width": 360,
+          "height": 588,
+          "right": 384,
+          "bottom": 830
+        },
+        "recovery": {
+          "x": 396,
+          "y": 334,
+          "width": 1020,
+          "height": 520,
+          "right": 1416,
+          "bottom": 854
+        },
+        "links": [
+          {
+            "text": "Operations",
+            "height": 63,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 63,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 63,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      }
+    },
+    {
+      "width": 1920,
+      "overflow": false,
+      "header": {
+        "x": 0,
+        "y": 0,
+        "width": 1920,
+        "height": 64,
+        "right": 1920,
+        "bottom": 64
+      },
+      "nav": {
+        "x": 772.8125,
+        "y": 0,
+        "width": 374.359375,
+        "height": 63,
+        "right": 1147.171875,
+        "bottom": 63
+      },
+      "toolbar": {
+        "x": 24,
+        "y": 80,
+        "width": 1728,
+        "height": 76,
+        "right": 1752,
+        "bottom": 156
+      },
+      "preview": {
+        "x": 713.859375,
+        "y": 168,
+        "width": 492.265625,
+        "height": 62,
+        "right": 1206.125,
+        "bottom": 230
+      },
+      "events": null,
+      "recovery": null,
+      "links": [
+        {
+          "text": "Operations",
+          "height": 63,
+          "width": 115.609375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Scenarios",
+          "height": 63,
+          "width": 81.859375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Account & API keys",
+          "height": 63,
+          "width": 144.890625,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "buttons": [
+        {
+          "text": "Events 1",
+          "height": 44,
+          "width": 90.09375,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Recovery 4",
+          "height": 44,
+          "width": 108.015625,
+          "visible": true,
+          "clickable": true
+        },
+        {
+          "text": "Back to demo",
+          "height": 44,
+          "width": 120.8125,
+          "visible": true,
+          "clickable": true
+        }
+      ],
+      "opened": {
+        "width": 1920,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 64,
+          "right": 1920,
+          "bottom": 64
+        },
+        "nav": {
+          "x": 772.8125,
+          "y": 0,
+          "width": 374.359375,
+          "height": 63,
+          "right": 1147.171875,
+          "bottom": 63
+        },
+        "toolbar": {
+          "x": 24,
+          "y": 80,
+          "width": 1728,
+          "height": 76,
+          "right": 1752,
+          "bottom": 156
+        },
+        "preview": {
+          "x": 713.859375,
+          "y": 168,
+          "width": 492.265625,
+          "height": 62,
+          "right": 1206.125,
+          "bottom": 230
+        },
+        "events": {
+          "x": 24,
+          "y": 242,
+          "width": 360,
+          "height": 478,
+          "right": 384,
+          "bottom": 720
+        },
+        "recovery": null,
+        "links": [
+          {
+            "text": "Operations",
+            "height": 63,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 63,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 63,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      },
+      "compared": {
+        "width": 1920,
+        "overflow": false,
+        "header": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 64,
+          "right": 1920,
+          "bottom": 64
+        },
+        "nav": {
+          "x": 772.8125,
+          "y": 0,
+          "width": 374.359375,
+          "height": 63,
+          "right": 1147.171875,
+          "bottom": 63
+        },
+        "toolbar": {
+          "x": 24,
+          "y": 80,
+          "width": 1728,
+          "height": 76,
+          "right": 1752,
+          "bottom": 156
+        },
+        "preview": {
+          "x": 713.859375,
+          "y": 168,
+          "width": 492.265625,
+          "height": 62,
+          "right": 1206.125,
+          "bottom": 230
+        },
+        "events": {
+          "x": 24,
+          "y": 242,
+          "width": 360,
+          "height": 588,
+          "right": 384,
+          "bottom": 830
+        },
+        "recovery": {
+          "x": 396,
+          "y": 334,
+          "width": 1500,
+          "height": 520,
+          "right": 1896,
+          "bottom": 854
+        },
+        "links": [
+          {
+            "text": "Operations",
+            "height": 63,
+            "width": 115.609375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Scenarios",
+            "height": 63,
+            "width": 81.859375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Account & API keys",
+            "height": 63,
+            "width": 144.890625,
+            "visible": true,
+            "clickable": true
+          }
+        ],
+        "buttons": [
+          {
+            "text": "Events 1",
+            "height": 44,
+            "width": 90.09375,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Recovery 4",
+            "height": 44,
+            "width": 108.015625,
+            "visible": true,
+            "clickable": true
+          },
+          {
+            "text": "Back to demo",
+            "height": 44,
+            "width": 120.8125,
+            "visible": true,
+            "clickable": true
+          }
+        ]
+      }
+    }
+  ]
+}

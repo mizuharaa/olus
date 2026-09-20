@@ -35,6 +35,8 @@ RUN npm run build
 # ── Stage 3: Runner ───────────────────────────────────────────────────────────
 FROM node:20-alpine AS production
 WORKDIR /app
+ARG BUILD_SHA=local
+ENV BUILD_SHA=$BUILD_SHA
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

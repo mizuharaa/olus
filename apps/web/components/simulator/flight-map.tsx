@@ -29,6 +29,7 @@ import {
   deadReckon, bearing, distanceNm, cardinal, machFor,
   deriveLive, interp, isoToHour, arcPoints,
 } from "@/lib/flight-derive"
+import { observeFlight, trackPosition, observedTrail, type FlightTrack } from "@/lib/flight-track"
 import { useConsoleTheme } from "@/lib/use-theme"
 import { GlobeView, type GlobeFlight } from "./globe-view"
 
@@ -71,8 +72,8 @@ const MAP_DARK = {
   planCancelled: "#39404E",
   planCancelledGlyph: "#D5DAE6",
   planCancelledInk: "#9AA2B4",
-  planSwap:      "#9B7FE0",
-  planSwapFlow:  "#B9A3EE",
+  planSwap:      "#2FE3A0",
+  planSwapFlow:  "#2FE3A0",
   planDelayed:   "#D9A441",
 
   // Cascade severity — imported, never redeclared. These three used to be
@@ -110,7 +111,7 @@ const MAP_DARK = {
   // prevent, reintroduced while trying to fix visibility. #3F6E93 clears 3:1
   // on the tile and stays 1.69:1 clear of spoke.
   live:          "#3F6E93",
-  liveSelected:  "#B9A3EE",
+  liveSelected:  "#2FE3A0",
 
   // Airport tiers — mirrors the API's hub / focus_city / spoke classification
   // rather than a hand-maintained binary. All three clear 3:1 on the basemap
@@ -121,7 +122,7 @@ const MAP_DARK = {
   groundStop:    "#E08A3C",
   gdp:           "#D9A441",
   depDelay:      "#D9A441",
-  eventEpicenter: "#E5628E",
+  eventEpicenter: "#FF7A1A",
   weather:       "#D9A441",
 } as const
 
@@ -142,9 +143,9 @@ const MAP_LIGHT = {
   planCancelled: "#C9CCC9",
   planCancelledGlyph: "#333935",
   planCancelledInk: "#5A625D",
-  planSwap:      "#5B3FA8",
-  planSwapFlow:  "#5B3FA8",
-  planDelayed:   "#B8863C",
+  planSwap:      "#17A874",
+  planSwapFlow:  "#17A874",
+  planDelayed:   "#C2560F",
 
   cascadeDirect: cascadeLight.direct.fill,
   cascadeOrder1: cascadeLight.order1.fill,
@@ -154,17 +155,17 @@ const MAP_LIGHT = {
   // Darker than the pre-split #8FB0C9 for the same reason the dark set was
   // brightened: at 2.15:1 the ambient tier was quiet past the point of being
   // legible. 3.11:1 keeps it the quietest mark that is still a mark.
-  live:          "#6E93B0",
-  liveSelected:  "#5B3FA8",
+  live:          "#4C82F7",
+  liveSelected:  "#17A874",
 
   airportHub:    "#0B4F47",
   airportFocus:  "#2F6D63",
   airportSpoke:  "#3D6B60",
   groundStop:    "#9A6420",
-  gdp:           "#B8863C",
-  depDelay:      "#B8863C",
-  eventEpicenter: "#B02E5C",
-  weather:       "#B8863C",
+  gdp:           "#C2560F",
+  depDelay:      "#C2560F",
+  eventEpicenter: "#FF7A1A",
+  weather:       "#C2560F",
 } as const
 
 /**
@@ -295,22 +296,13 @@ function icon(key: string, factory: () => L.DivIcon): L.DivIcon {
   return _cache.get(k)!
 }
 
-/** Selected live flight — teal plane with an expanding radar ring + blink,
- *  rendered crisp in the focus pane while the rest of the map dims. */
+/** Selected observed contact; a steady blue ring keeps it distinct from recovery jade. */
 function liveSelIcon(heading: number | null): L.DivIcon {
-  const hdg = Math.round((heading ?? 0) / 10) * 10
-  return icon(`lvsel|${hdg}`, () =>
-    L.divIcon({
-      className: "",
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
-      html: `<div class="ae-livesel" style="width:34px;height:34px;display:flex;align-items:center;justify-content:center">
-        <span class="ae-livesel-ring"></span>
-        <span class="ae-livesel-ring delay"></span>
-        <span style="width:22px;height:22px;transform:rotate(${hdg}deg);transform-origin:center;filter:drop-shadow(0 1px 4px rgba(91,63,168,0.6))"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" fill="#5B3FA8" stroke="#FFFFFF" stroke-width="1"/></svg></span>
-      </div>`,
-    })
-  )
+  const hdg = Math.round(heading ?? 0)
+  return icon(`lvsel|${hdg}`, () => L.divIcon({
+    className: "olus-selected-contact", iconSize: [34,34], iconAnchor: [17,17],
+    html: `<div style="width:34px;height:34px;border:2px solid var(--neutral-arc);border-radius:50%;background:var(--bone-050);display:grid;place-items:center"><svg viewBox="0 0 64 64" width="26" height="26" style="transform:rotate(${hdg}deg)"><path d="${AIRFRAME_PATH}" fill="var(--neutral-arc)"/></svg></div>`,
+  }))
 }
 
 /**
@@ -371,7 +363,7 @@ function liveIcon(heading: number | null, sel: boolean, velKt: number | null): L
       ? `<span class="ae-plane-pulse" style="--ae-pulse:${fill}"></span>`
       : ""
     return L.divIcon({
-      className: "",
+      className: "ae-live-contact",
       iconSize: [sz, sz],
       iconAnchor: [sz / 2, sz / 2],
       html:
@@ -590,6 +582,79 @@ function airportIcon(tier: AirportTier, faa: FAAStatus | undefined, hasWx: boole
 
 function ZoomTracker({ onZoom }: { onZoom: (z: number) => void }) {
   useMapEvents({ zoomend: (e) => onZoom(e.target.getZoom()) })
+  return null
+}
+
+// One canvas for all live contacts; selection keeps the existing detailed marker/inspector.
+function LiveTrafficLayer({planes, selected, onSelect}: {planes:LiveFlight[];selected:string|undefined;onSelect:(flight:LiveFlight)=>void}) {
+  const map=useMap(), latest=useRef({planes,selected,onSelect}), redraw=useRef<()=>void>(()=>{})
+  const tracks=useRef(new Map<string,FlightTrack>())
+  latest.current={planes,selected,onSelect}
+  useEffect(()=>{
+    const ids=new Set(planes.map(f=>f.icao24))
+    for(const f of planes) {
+      if(Number.isFinite(f.lat)&&Number.isFinite(f.lon)&&Number.isFinite(f.last_contact)&&Math.abs(f.lat)<=90&&Math.abs(f.lon)<=180)
+        tracks.current.set(f.icao24,observeFlight(tracks.current.get(f.icao24),f))
+    }
+    for(const id of tracks.current.keys())if(!ids.has(id))tracks.current.delete(id)
+    redraw.current()
+  },[planes,selected])
+  useEffect(()=>{
+    const canvas=document.createElement("canvas"), ctx=canvas.getContext("2d")!
+    canvas.className="olus-traffic-canvas";canvas.setAttribute("aria-hidden","true")
+    Object.assign(canvas.style,{position:"absolute",inset:"0",pointerEvents:"none",zIndex:"450"})
+    map.getContainer().appendChild(canvas)
+    const shape=new Path2D(AIRFRAME_PATH), reduced=matchMedia("(prefers-reduced-motion: reduce)")
+    const blue=getComputedStyle(map.getContainer()).getPropertyValue("--neutral-arc").trim()||MAP_COLORS.live
+    const observed=L.polyline([],{pane:"ae-focus-line",color:blue,weight:3,opacity:1,interactive:false}).addTo(map)
+    const forecast=L.polyline([],{pane:"ae-focus-line",color:blue,weight:3,opacity:.85,dashArray:"10 7",interactive:false}).addTo(map)
+    let marker:L.Marker|null=null, selectedId:string|undefined, markerHeading:number|null=null, markerLabel="", frame=0, lastFrame=0
+    let hits:{x:number;y:number;lf:LiveFlight}[]=[]
+    const draw=(time:number)=>{
+      frame=0;if(document.hidden)return
+      if(time-lastFrame<50){schedule();return}lastFrame=time
+      const size=map.getSize(),dpr=Math.min(devicePixelRatio,2), now=Date.now()/1000
+      if(canvas.width!==size.x*dpr||canvas.height!==size.y*dpr){canvas.width=size.x*dpr;canvas.height=size.y*dpr;canvas.style.width=size.x+"px";canvas.style.height=size.y+"px"}
+      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,size.x,size.y);hits=[]
+      let selectedFound=false, moving=false
+      for(const lf of latest.current.planes){
+        const track=tracks.current.get(lf.icao24);if(!track)continue
+        const pos=trackPosition(track,now,reduced.matches), point=map.latLngToContainerPoint(pos)
+        if(lf.icao24===latest.current.selected){
+          selectedFound=true
+          if(selectedId!==lf.icao24){marker?.remove();marker=L.marker(pos,{pane:"ae-focus-marker",icon:liveSelIcon(track.heading),title:lf.flight_iata||lf.flight_icao||lf.icao24}).addTo(map);selectedId=lf.icao24;markerLabel=""}
+          marker!.setLatLng(pos)
+          if(markerHeading!==track.heading){marker!.setIcon(liveSelIcon(track.heading));markerHeading=track.heading}
+          observed.setLatLngs(observedTrail(track,now,reduced.matches))
+          const fresh=now-track.last_contact<=60
+          forecast.setLatLngs(fresh&&track.heading!=null&&(track.velocity_kt??0)>0?[pos,deadReckon(pos[0],pos[1],track.heading,track.velocity_kt!,600,600)]:[])
+          const label=`${lf.flight_iata||lf.flight_icao||lf.icao24} ? ${fresh?"Observed track; dashed heading estimate":"Stale position; direction estimate paused"}`
+          if(markerLabel!==label){const text=document.createElement("span");text.textContent=label;marker!.bindTooltip(text);markerLabel=label}
+          marker!.getElement()?.setAttribute("data-position",pos.join(","))
+        }
+        if(point.x < -20||point.y < -20||point.x > size.x+20||point.y > size.y+20)continue
+        if(now-30<track.last_contact&&track.fixes.length>1)moving=true
+        hits.push({x:point.x,y:point.y,lf})
+        if(lf.icao24===latest.current.selected)continue
+        ctx.save();ctx.translate(point.x,point.y);ctx.rotate((track.heading??0)*Math.PI/180);ctx.scale(16/64,16/64);ctx.translate(-32,-32)
+        ctx.globalAlpha=now-track.last_contact>60?.4:(lf.velocity_kt??0)<50?.55:.95;ctx.fillStyle=blue;ctx.fill(shape);ctx.restore()
+      }
+      if(!selectedFound){marker?.remove();marker=null;selectedId=undefined;observed.setLatLngs([]);forecast.setLatLngs([])}
+      canvas.dataset.contacts=String(hits.length)
+      // Animation stays outside React; no whole-dashboard render per frame.
+      if(moving&&!reduced.matches)schedule()
+    }
+    const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(draw)}
+    const click=(e:L.LeafletMouseEvent)=>{
+      if((e.originalEvent.target as Element)?.closest(".leaflet-marker-icon,.leaflet-interactive"))return
+      let nearest:LiveFlight|undefined, distance=14*14
+      for(const hit of hits){const d=(hit.x-e.containerPoint.x)**2+(hit.y-e.containerPoint.y)**2;if(d<distance){distance=d;nearest=hit.lf}}
+      if(nearest)latest.current.onSelect(nearest)
+    }
+    const staleTimer=window.setInterval(schedule,5000)
+    redraw.current=schedule;map.on("move zoom resize",schedule);map.on("click",click);document.addEventListener("visibilitychange",schedule);reduced.addEventListener("change",schedule);schedule()
+    return()=>{clearInterval(staleTimer);cancelAnimationFrame(frame);map.off("move zoom resize",schedule);map.off("click",click);document.removeEventListener("visibilitychange",schedule);reduced.removeEventListener("change",schedule);observed.remove();forecast.remove();marker?.remove();canvas.remove();redraw.current=()=>{}}
+  },[map])
   return null
 }
 
@@ -946,7 +1011,7 @@ function FlightDetailCard({
   const oAp = NIMBUS_AIRPORTS[flight.origin]
   const dAp = NIMBUS_AIRPORTS[flight.destination]
 
-  let actionLabel = "", actionColor = "#5B3FA8", actionIcon = ""
+  let actionLabel = "", actionColor = "#17A874", actionIcon = ""
   // Colours mirror the map's MAP_COLORS palette so the inspector card and the
   // line/marker on the map read as the same semantic state at a glance.
   if (isPlanCancelled)     { actionLabel = "Cancelled by recovery plan"; actionColor = MAP_COLORS.planCancelledInk; actionIcon = "✕" }
@@ -1319,9 +1384,9 @@ function AirportPanel({ icao, faa, hasWx, wxText, simAffected, onClose }: {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-interface Props { selectedFlight: string | null; onFlightSelect: (id: string | null) => void }
+interface Props { selectedFlight: string | null; onFlightSelect: (id: string | null) => void; externalFeed?: boolean; readOnlyRun?: boolean; previewPlanId?: string | null }
 
-export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
+export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed=false, readOnlyRun=false, previewPlanId=null }: Props) {
   const {
     schedule, flightStates, activeEvents, recoveryPlans, appliedPlanId, applyPlan,
     cascadeSummary, liveFlights, showLiveFlights, showSimulation,
@@ -1354,7 +1419,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
   // rather than from the hook's stored CHOICE, so "system" resolves correctly
   // and the map agrees with whatever the pre-paint script already stamped.
   const { resolved: consoleTheme } = useConsoleTheme()
-  const lightBasemap = consoleTheme === "light"
+  const lightBasemap = externalFeed || consoleTheme === "light"
   // Swap the module-level palette BEFORE any icon factory runs this render.
   // Called during render rather than in an effect on purpose: an effect fires
   // after paint, so the first frame after a theme switch would draw every
@@ -1372,7 +1437,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
 
   // 5s tick — smooth enough for dead reckoning, far fewer re-renders
   useEffect(() => {
-    const t = setInterval(() => setNowMs(Date.now()), 5_000)
+    const t = setInterval(() => { if(!document.hidden)setNowMs(Date.now()) }, 5_000)
     return () => clearInterval(t)
   }, [])
 
@@ -1411,19 +1476,21 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
   }, [setLiveFlights])
 
   useEffect(() => {
+    if(externalFeed)return
     // Paint cached planes immediately (if fresh) so the map isn't empty while
     // the first live fetch runs, then refresh + poll.
     useSimulationStore.getState().hydrateLiveFromCache()
     fetchLive()
-    const t = setInterval(fetchLive, 15_000)
-    return () => clearInterval(t)
-  }, [fetchLive])
+    const t = setInterval(() => { if(!document.hidden)void fetchLive() }, 15_000)
+    return () => { clearInterval(t); liveAbort.current?.abort() }
+  }, [fetchLive,externalFeed])
 
   // ── Live traffic as the simulation stem — post the current ADS-B
   //    snapshot to the API, which rebuilds the working schedule from it so
   //    events/cascade/recovery solve over REAL current traffic. Posting an
   //    empty list restores the Nimbus YAML network. ──
   const seedFromLive = useCallback(async () => {
+    if(readOnlyRun)return
     setSeeding(true)
     try {
       const body = liveSeeded
@@ -1450,7 +1517,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
     } finally {
       setSeeding(false)
     }
-  }, [liveSeeded, liveFlights, setSchedule])
+  }, [liveSeeded, liveFlights, setSchedule, readOnlyRun])
 
   const fetchFAA = useCallback(async () => {
     try {
@@ -1498,11 +1565,12 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
     [activeEvents]
   )
 
+  const visualPlanId=previewPlanId??appliedPlanId
   // Applied recovery plan sets — strictly derived from the plan dict so the
   // inspector card can keep its distinction between "cancelled by plan" and
   // "grounded by cascade".
   const applied = useMemo(() => {
-    const plan = appliedPlanId ? recoveryPlans.find((p) => p.plan_id === appliedPlanId) : null
+    const plan = visualPlanId ? recoveryPlans.find((p) => p.plan_id === visualPlanId) : null
     const delayed = new Map<string, number>()
     for (const d of plan?.delayed_flights || []) delayed.set(d.flight_id, d.delay_minutes)
     return {
@@ -1510,7 +1578,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
       swap:      new Set<string>((plan?.aircraft_swaps || []).map((s: any) => s.flight_id)),
       delayed,
     }
-  }, [appliedPlanId, recoveryPlans])
+  }, [visualPlanId, recoveryPlans])
 
   // Visual cancellation set — union of:
   //
@@ -1523,12 +1591,12 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
   // Clause (b) is the critical filter. After applying Plan A, flight_states
   // entries for A's cancelled flights carry `status="cancelled"` AND
   // `applied_plan_id="A"`. When the operator clicks Plan B, the FRONTEND
-  // optimistically flips appliedPlanId to "B" before the WS broadcast
+  // optimistically flips visualPlanId to "B" before the WS broadcast
   // arrives. Without the filter, those Plan-A-stamped flights stay in the
   // visuallyCancelled set during the gap — the map shows Plan A's grey
   // lines PLUS Plan B's grey lines, so the switch reads as "nothing
   // changed". With the filter, anything stamped by Plan A is excluded the
-  // instant appliedPlanId moves to "B" (it'll be restored by the snapshot
+  // instant visualPlanId moves to "B" (it'll be restored by the snapshot
   // revert on the backend anyway, so we're just front-running that revert).
   //
   // Cascade-cancelled flights (no `applied_plan_id` at all) are always
@@ -1541,14 +1609,14 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
       const stampedBy = s.applied_plan_id ?? null
       // Include if: cascade-cancelled (no stamp) OR stamped by the plan we
       // currently have selected. Exclude if stamped by a stale plan.
-      if (stampedBy == null || stampedBy === appliedPlanId) {
+      if (stampedBy == null || stampedBy === visualPlanId) {
         set.add(fid)
       }
     }
     return set
-  }, [applied.cancelled, flightStates, appliedPlanId])
+  }, [applied.cancelled, flightStates, visualPlanId])
 
-  const activePlan = appliedPlanId ? recoveryPlans.find((p: RecoveryPlan) => p.plan_id === appliedPlanId) ?? null : null
+  const activePlan = visualPlanId ? recoveryPlans.find((p: RecoveryPlan) => p.plan_id === visualPlanId) ?? null : null
 
   // Sim event epicenter airports
   const simEvtAirports = useMemo(() => {
@@ -1674,40 +1742,9 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
   // from the backend). Used as a React key on the Polyline layer below so
   // changes force a remount, triggering the fade-in / draw-on animation.
   const applyEpoch = useMemo(
-    () => `${appliedPlanId ?? "none"}:${visuallyCancelled.size}:${applied.delayed.size}:${applied.swap.size}`,
-    [appliedPlanId, applied, visuallyCancelled],
+    () => `${visualPlanId ?? "none"}:${visuallyCancelled.size}:${applied.delayed.size}:${applied.swap.size}`,
+    [visualPlanId, applied, visuallyCancelled],
   )
-
-  // Dead-reckoned live positions — viewport culled for performance.
-  //
-  // The cap used to be a plain `.slice(0, 450)`, which took the FIRST 450 of
-  // the in-view set. adsb.lol returns aircraft in a spatially-clustered order,
-  // so when zoomed out (whole CONUS in view) those first 450 all fell in one
-  // region — the classic "I only see planes over the west coast" bug. Fix:
-  // when the in-view set exceeds the cap, SAMPLE it evenly across the array
-  // so the render is spread over the whole viewport instead of clustered.
-  const livePlanes = useMemo(() => {
-    const nowSec = nowMs / 1000
-    const CAP = 650
-    const inView = liveFlights.filter((lf) => !mapBounds || mapBounds.contains([lf.lat, lf.lon]))
-    let sampled = inView
-    if (inView.length > CAP) {
-      const step = inView.length / CAP
-      sampled = []
-      for (let k = 0; k < CAP; k++) sampled.push(inView[Math.floor(k * step)])
-    }
-    return sampled
-      .map((lf) => {
-        if (!lf.on_ground && lf.heading != null && (lf.velocity_kt ?? 0) > 80 && lf.last_contact > 0) {
-          const elapsed = nowSec - lf.last_contact
-          if (elapsed >= 0 && elapsed < 300) {
-            const [lat, lon] = deadReckon(lf.lat, lf.lon, lf.heading, lf.velocity_kt!, elapsed)
-            return { lf, lat, lon }
-          }
-        }
-        return { lf, lat: lf.lat, lon: lf.lon }
-      })
-  }, [liveFlights, nowMs, mapBounds])
 
   // Simulated Nimbus aircraft.
   //
@@ -1776,32 +1813,6 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
     : MAP_COLORS.liveSelected
     : MAP_COLORS.liveSelected
 
-  // Projected path for the selected live flight: a curved leg from the
-  // nearest airport behind it (likely origin) through its current position,
-  // and a forward leg to the airport it is tracking toward (likely arrival).
-  // Both endpoints + the dead-reckoned position are computed from ADS-B only.
-  const selLivePath = useMemo(() => {
-    const lf = selectedLiveFlight
-    if (!lf) return null
-    const nowSec = nowMs / 1000
-    const elapsed = nowSec - lf.last_contact
-    const [cLat, cLon] =
-      lf.heading != null && (lf.velocity_kt ?? 0) > 40 && elapsed > 0 && elapsed < 300
-        ? deadReckon(lf.lat, lf.lon, lf.heading, lf.velocity_kt!, elapsed)
-        : [lf.lat, lf.lon]
-
-    const d = deriveLive(lf)
-    const originAp = d.nearest ? NIMBUS_AIRPORTS[d.nearest.icao] : null
-    const arrAp = d.ahead ? NIMBUS_AIRPORTS[d.ahead.icao] : null
-    // only draw the "behind" leg when the plane has actually left that airport
-    const behind =
-      originAp && (d.nearest?.nm ?? 0) > 12
-        ? arcPoints(originAp.lat, originAp.lon, cLat, cLon, 24)
-        : null
-    const ahead = arrAp ? arcPoints(cLat, cLon, arrAp.lat, arrAp.lon, 24) : null
-    return { pos: [cLat, cLon] as [number, number], originAp, arrAp, behind, ahead, hdg: lf.heading }
-  }, [selectedLiveFlight, nowMs])
-
   const focusTarget: ScheduledFlight | LiveFlight | null = selectedSched || selectedLiveFlight
   const ageSec = lastFetch ? Math.round((nowMs - lastFetch) / 1000) : null
 
@@ -1860,7 +1871,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
   const focusClass = selectedLiveFlight ? " map-focus-live" : selectedSched ? " map-focus" : ""
 
   return (
-    <div className={`simulator-map-shell w-full h-full min-h-0 relative overflow-hidden isolate${focusClass}`}>
+    <div data-preview-plan={previewPlanId||""} className={`simulator-map-shell w-full h-full min-h-0 relative overflow-hidden isolate${focusClass}`}>
       {/* ── View switch ──────────────────────────────────────────────────
           Joins the top-right instrument column rather than claiming a new
           lane; DESIGN.md gives that corner one owner and the zoom buttons sit
@@ -1928,7 +1939,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
       <div role="region" aria-label="Network map — airports and flights" style={{ position: "absolute", inset: 0 }}>
       <MapContainer
         center={[39.5, -98.0]} zoom={4} minZoom={2} maxZoom={14}
-        zoomControl={false} scrollWheelZoom worldCopyJump={false}
+        zoomControl={false} scrollWheelZoom worldCopyJump={false} maxBounds={[[-85,-180],[85,180]]} maxBoundsViscosity={1}
         preferCanvas
         className="w-full h-full z-0"
       >
@@ -1955,13 +1966,9 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
         <TileLayer
           key={lightBasemap ? "light" : "dark"}
           className="ae-basemap"
-          url={
-            lightBasemap
-              ? "https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}{r}.png"
-              : "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png"
-          }
-          attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
-          subdomains="abcd" maxZoom={19}
+          url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          noWrap maxZoom={19}
           keepBuffer={4}
           updateWhenIdle={false}
           updateWhenZooming={false}
@@ -2111,52 +2118,6 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
           />
         )}
 
-        {/* Selected live flight — colorful projected path + crisp blinking
-            marker in the focus panes, above the dimmed map. */}
-        {selLivePath && (
-          <>
-            {/* behind leg (origin → position): dashed teal, glow underlay */}
-            {selLivePath.behind && (
-              <>
-                <Polyline pane="ae-focus-line" positions={selLivePath.behind}
-                  pathOptions={{ color: MAP_COLORS.liveSelected, weight: 8, opacity: 0.10 }} />
-                <Polyline pane="ae-focus-line" positions={selLivePath.behind}
-                  pathOptions={{ color: MAP_COLORS.liveSelected, weight: 2, opacity: 0.55, dashArray: "3 7" }} />
-              </>
-            )}
-            {/* forward leg (position → arrival): solid glowing teal beam */}
-            {selLivePath.ahead && (
-              <>
-                <Polyline pane="ae-focus-line" positions={selLivePath.ahead}
-                  pathOptions={{ color: MAP_COLORS.liveSelected, weight: 10, opacity: 0.16 }} />
-                <Polyline pane="ae-focus-line" positions={selLivePath.ahead}
-                  pathOptions={{ color: MAP_COLORS.liveSelected, weight: 3.5, opacity: 0.95, className: "ae-route-flow", dashArray: "10 7" }} />
-              </>
-            )}
-            {/* origin + arrival airports, crisp with labels */}
-            {selLivePath.originAp && (
-              <Marker pane="ae-focus-marker" position={[selLivePath.originAp.lat, selLivePath.originAp.lon]}
-                icon={airportIcon(airportTier(`K${selLivePath.originAp.iata}`), undefined, false, false, false)} interactive={false}>
-                <Tooltip direction="top" offset={[0, -12]} opacity={1} permanent>
-                  <span className="font-mono font-bold text-[11px]">{selLivePath.originAp.iata} · nearest</span>
-                </Tooltip>
-              </Marker>
-            )}
-            {selLivePath.arrAp && (
-              <Marker pane="ae-focus-marker" position={[selLivePath.arrAp.lat, selLivePath.arrAp.lon]}
-                icon={airportIcon(airportTier(`K${selLivePath.arrAp.iata}`), undefined, false, false, true)} interactive={false}>
-                <Tooltip direction="top" offset={[0, -12]} opacity={1} permanent>
-                  <span className="font-mono font-bold text-[11px]">{selLivePath.arrAp.iata} · heading to</span>
-                </Tooltip>
-              </Marker>
-            )}
-            {/* the selected plane — blinking radar marker */}
-            <Marker pane="ae-focus-marker" position={selLivePath.pos}
-              icon={liveSelIcon(selLivePath.hdg)}
-              eventHandlers={{ click: () => setSelectedLiveFlight(null) }} />
-          </>
-        )}
-
         {/* Airport nodes */}
         {Object.entries(NIMBUS_AIRPORTS).map(([id, ap]) => (
           <Marker key={id} position={[ap.lat, ap.lon]}
@@ -2255,40 +2216,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
         {/* Live airline aircraft — viewport culled. Auto-hidden while a
             disruption is active so the ADS-B sea doesn't bury the affected
             Nimbus fleet; re-appears once the event clears. */}
-        {showLiveFlights && !hasActiveEvents && livePlanes.map(({ lf, lat, lon }) => {
-          const sel = selectedLiveFlight?.icao24 === lf.icao24
-          return (
-            <Marker key={`lv-${lf.icao24}`} position={[lat, lon]}
-              icon={liveIcon(lf.heading, sel, lf.velocity_kt)}
-              zIndexOffset={sel ? 1900 : 400}
-              // keyboard={false}: Leaflet makes every marker focusable by
-              // default, so ~650 ambient aircraft — each with no accessible
-              // name — sat in the tab order BEFORE the panels. Reaching the
-              // Commit button by keyboard took 665 presses, and a screen
-              // reader announced 650 anonymous clickables. Ambient traffic is
-              // mouse-reachable only; every OWNED flight and airport keeps its
-              // keyboard access.
-              keyboard={false}
-              eventHandlers={{ click: () => { setSelectedLiveFlight(sel ? null : lf); onFlightSelect(null); setSelAirport(null) } }}
-            >
-              {(sel || mapZoom >= 7) && (
-                <Tooltip direction="top" offset={[0, -10]} opacity={1}>
-                  <div>
-                    <div className="font-mono font-bold text-xs">
-                      {lf.flight_iata || lf.flight_icao}
-                      <span
-                        className="ml-1.5 text-[8px] px-1 py-0.5 rounded font-semibold"
-                        style={{ background: "var(--ae-neutral-bg)", border: "1px solid var(--ae-line)", color: "var(--ae-text-3)" }}
-                      >ADS-B</span>
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">{lf.airline_name}</div>
-                    {lf.altitude_ft != null && <div className="text-[11px] font-mono">{lf.altitude_ft.toLocaleString()} ft · {lf.velocity_kt} kt</div>}
-                  </div>
-                </Tooltip>
-              )}
-            </Marker>
-          )
-        })}
+        {showLiveFlights && (externalFeed || !hasActiveEvents) && <LiveTrafficLayer planes={liveFlights} selected={selectedLiveFlight?.icao24} onSelect={lf=>{onFlightSelect(null);setSelectedLiveFlight(lf);setSelAirport(null)}} />}
       </MapContainer>
       </div>
       )}
@@ -2296,15 +2224,15 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
       {/* ── Overlay panels ── */}
 
       {/* Recovery plan banner — top of map when plan applied */}
-      {activePlan && <RecoveryBanner plan={activePlan} onUnapply={() => applyPlan(null)} />}
+      {!externalFeed && activePlan && !previewPlanId && <RecoveryBanner plan={activePlan} onUnapply={() => applyPlan(null)} />}
 
       {/* Disruption banner — top-left */}
-      {!activePlan && (
+      {!externalFeed && !activePlan && (
         <DisruptionBanner events={dedupEvents} impactCount={impactRoutes.length} summary={cascadeSummary} />
       )}
 
       {/* When plan is active, show compact event list at top-left */}
-      {activePlan && hasActiveEvents && (
+      {!externalFeed && activePlan && hasActiveEvents && (
         <div className="absolute top-3 left-3 z-[450]" style={{ maxWidth: 240 }}>
           <div
             className="rounded-lg px-3 py-2"
@@ -2421,7 +2349,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
           <div className="flex flex-col gap-1.5 text-[11px] mb-1.5 pb-1.5 border-b border-border/40 items-start">
         <div
           className="rounded-lg px-3 py-2 flex flex-col gap-1.5 text-[11px]"
-          style={{ background: GLASS, backdropFilter: "blur(12px)", border: "1px solid var(--ae-line)" }}
+          style={{ background: "var(--ae-surface-2)",  border: "1px solid var(--ae-line)" }}
         >
           {/* Layer toggles — swatch = the layer's actual mark color (data
               link); on/off is carried by text, not a status dot. */}
@@ -2434,16 +2362,16 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
               minHeight: 32,
               // Auto-hidden while a disruption is active (affected-only view),
               // so it reads as muted/struck even though the toggle stays on.
-              color: showLiveFlights && !hasActiveEvents ? "var(--ae-text)" : "var(--ae-text-3)",
-              textDecoration: showLiveFlights && !hasActiveEvents ? "none" : "line-through",
+              color: showLiveFlights && (externalFeed || !hasActiveEvents) ? "var(--ae-text)" : "var(--ae-text-3)",
+              textDecoration: showLiveFlights && (externalFeed || !hasActiveEvents) ? "none" : "line-through",
             }}
           >
             <span
               className="w-3 h-1 rounded-full shrink-0"
-              style={{ background: showLiveFlights && !hasActiveEvents ? MAP_COLORS.live : "var(--ae-line-strong)" }}
+              style={{ background: showLiveFlights && (externalFeed || !hasActiveEvents) ? MAP_COLORS.live : "var(--ae-line-strong)" }}
             />
             <span>Real flights (ADS-B)</span>
-            {hasActiveEvents ? (
+            {hasActiveEvents && !externalFeed ? (
               <span className="text-[11px] font-semibold" style={{ color: "var(--ae-text-3)" }}>
                 hidden during event
               </span>
@@ -2478,7 +2406,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
               from the current ADS-B snapshot (or restore the YAML network). */}
           <button
             onClick={seedFromLive}
-            disabled={seeding || (!liveSeeded && liveFlights.length === 0)}
+            disabled={readOnlyRun || seeding || (!liveSeeded && liveFlights.length === 0)}
             className="flex items-center gap-2 font-semibold transition-colors disabled:opacity-40"
             title={liveSeeded
               ? "Restore the Nimbus YAML network"
@@ -2508,8 +2436,8 @@ export default function FlightMap({ selectedFlight, onFlightSelect }: Props) {
           <div
             className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold tracking-wide"
             style={{
-              background: GLASS,
-              backdropFilter: "blur(8px)",
+              background: "var(--ae-surface-2)",
+
               border: "1px solid var(--ae-line)",
               color: loading
                 ? "var(--ae-text-3)"

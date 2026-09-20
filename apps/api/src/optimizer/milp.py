@@ -132,6 +132,7 @@ class RecoveryOptimizer:
         timeout_secs: int = 30,
         use_fallback: bool = True,
         deterministic: bool = False,
+        progress=None,
     ):
         self.timeout_secs = timeout_secs
         self.use_fallback = use_fallback
@@ -145,6 +146,8 @@ class RecoveryOptimizer:
         # Production keeps num_search_workers=4 for solve speed; this is
         # opt-in only, so /simulator API responses are unchanged.
         self.deterministic = deterministic
+        self.progress = progress
+        self._solve_sequence = 0
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -170,6 +173,15 @@ class RecoveryOptimizer:
         plans: list[RecoveryPlan] = []
         for plan_id, weights in PLAN_WEIGHTS.items():
             t0 = time.monotonic()
+            self._solve_sequence += 1
+            if self.progress:
+                self.progress(
+                    {
+                        "type": "plan_started",
+                        "plan_id": plan_id,
+                        "solve_sequence": self._solve_sequence,
+                    }
+                )
             plan = self._solve_plan(
                 plan_id=plan_id,
                 weights=weights,
@@ -183,6 +195,17 @@ class RecoveryOptimizer:
             )
             plan.solve_time_ms = max(1, int((time.monotonic() - t0) * 1000))
             plans.append(plan)
+            if self.progress:
+                self.progress(
+                    {
+                        "type": "plan_completed",
+                        "plan_id": plan_id,
+                        "solve_sequence": self._solve_sequence,
+                        "status": plan.status,
+                        "solve_time_ms": plan.solve_time_ms,
+                        "cost_usd": plan.total_cost_usd,
+                    }
+                )
             logger.info(
                 "Plan %s (%s) [%s]: %d cancelled, %d delayed, $%.0f — %dms",
                 plan_id,
@@ -371,7 +394,41 @@ class RecoveryOptimizer:
         model.minimize(sum(obj))
 
         # ── Solve ─────────────────────────────────────────────────────────────
-        status_code = solver.solve(model)
+        callback = None
+        if self.progress:
+            emit, sequence = self.progress, self._solve_sequence
+            constraints = len(model.proto.constraints)
+            emit(
+                {
+                    "type": "model_ready",
+                    "plan_id": plan_id,
+                    "solve_sequence": sequence,
+                    "constraint_count": constraints,
+                }
+            )
+
+            class Progress(cp_model.CpSolverSolutionCallback):
+                def __init__(self):
+                    super().__init__()
+                    self.count = 0
+
+                def on_solution_callback(self):
+                    self.count += 1
+                    emit(
+                        {
+                            "type": "incumbent",
+                            "plan_id": plan_id,
+                            "solve_sequence": sequence,
+                            "incumbent_count": self.count,
+                            "objective_value": self.objective_value,
+                            "best_objective_bound": self.best_objective_bound,
+                            "constraints_satisfied": constraints,
+                            "solver_elapsed_seconds": self.wall_time,
+                        }
+                    )
+
+            callback = Progress()
+        status_code = solver.solve(model, callback)
         solved = status_code in (cp_model.OPTIMAL, cp_model.FEASIBLE)
 
         if not solved:

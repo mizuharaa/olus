@@ -1,375 +1,76 @@
 "use client"
 import Link from "next/link"
-import { motion } from "framer-motion"
-import { BarChart3, Shield, Zap, Database, Cloud } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
+import { useEffect, useState } from "react"
+import { toast } from "sonner"
 import { OlusLogo } from "@/components/ds/logo"
+import { facts } from "@/lib/facts"
+import s from "./docs.module.css"
 
-function Section({ id, title, icon: Icon, children }: { id: string; title: string; icon: any; children: React.ReactNode }) {
-  return (
-    <motion.section
-      id={id}
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="scroll-mt-20"
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-8 h-8 rounded-2xl bg-ink/5 border border-ink/10 flex items-center justify-center">
-          <Icon className="w-4 h-4 text-ink" />
-        </div>
-        <h2 className="font-display text-2xl font-medium tracking-tight">{title}</h2>
-      </div>
-      {children}
-    </motion.section>
-  )
+const sections = [
+  ["problem", "The recovery problem"], ["optimizer", "Recovery optimizer"],
+  ["prediction", "Cascade prediction"], ["crew", "Crew checks"],
+  ["data", "Data and replay"], ["architecture", "System architecture"],
+] as const
+function Section({ id, children }: { id: typeof sections[number][0]; children: React.ReactNode }) {
+  const index = sections.findIndex(section => section[0] === id)
+  return <section id={id} className={s.section}><h2><span>{String(index + 1).padStart(2, "0")}</span><a href={`#${id}`}>{sections[index][1]} <span aria-hidden>#</span></a></h2>{children}</section>
 }
-
 function CodeBlock({ children }: { children: string }) {
-  return (
-    <pre className="rounded-xl border border-border bg-secondary/50 p-4 text-xs text-muted-foreground overflow-x-auto font-mono leading-relaxed">
-      {children}
-    </pre>
-  )
+  const [copied, setCopied] = useState(false)
+  return <div className={s.code}><button type="button" onClick={async () => {
+    try { await navigator.clipboard.writeText(children); setCopied(true); toast.success("Code copied") }
+    catch { toast.error("Copy unavailable", { description: "Select the code and copy it with your keyboard." }) }
+  }}>{copied ? "Copied" : "Copy"}</button><pre tabIndex={0}><code>{children}</code></pre></div>
 }
-
-function TableRow({ cells }: { cells: string[] }) {
-  return (
-    <tr className="border-b border-border">
-      {cells.map((c, i) => (
-        <td key={i} className={`px-4 py-2.5 text-sm ${i === 0 ? "font-mono text-ink font-medium" : "text-muted-foreground"}`}>
-          {c}
-        </td>
-      ))}
-    </tr>
-  )
-}
-
 export default function DocsPage() {
-  return (
-    <main className="min-h-screen bg-background">
-      <div className="sticky top-0 z-50 flex justify-center pt-3 px-4">
-        <nav className="w-full max-w-6xl nav-pill-surface h-12 flex items-center justify-between px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2">
-            <OlusLogo size={28} />
-            <span className="font-display font-medium">Olus</span>
-          </Link>
-          <div className="flex gap-6 text-sm text-muted-foreground">
-            <Link href="/simulator" className="hover:text-ink font-medium transition-colors">Simulator</Link>
-            <Link href="/scenarios" className="hover:text-ink font-medium transition-colors">Scenarios</Link>
-          </div>
-        </nav>
-      </div>
-
-      <div className="max-w-4xl mx-auto px-6 py-16 space-y-16">
-        {/* Header */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="section-badge mb-4"><BarChart3 className="w-3.5 h-3.5" />Technical methodology</div>
-          <h1 className="font-display text-5xl font-medium tracking-tight mb-4">How Olus works</h1>
-          <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl">
-            A deep dive into the optimizer formulation, cascade predictor, crew legality engine, and data sources powering the simulation.
-          </p>
-        </motion.div>
-
-        <Separator />
-
-        {/* Problem */}
-        <Section id="problem" title="The $34B cascade problem" icon={Zap}>
-          <div className="prose-sm text-muted-foreground space-y-4">
-            <p>
-              U.S. flight disruptions cost approximately <span className="text-foreground font-semibold">$34 billion annually</span> as of 2026.
-              Weather causes ~74% of delays. The core challenge is <em>cascade propagation</em>: airlines reuse aircraft 4–5 times per day,
-              so a single late inbound flight propagates into late departures for the next 18+ hours.
-            </p>
-            <p>
-              Large carriers (Delta, United) operate proprietary Operations Control Center (OCC) software built over decades.
-              Regional carriers — Breeze, Avelo, Frontier, JSX, Sun Country — rely on expensive third-party tools and manual dispatcher judgment.
-              Olus is an open-source OCC reference implementation.
-            </p>
-            <div className="rounded-xl border border-border bg-secondary/30 p-4 font-mono text-xs">
-              <div className="text-muted-foreground mb-2">{"// Cascade propagation example"}</div>
-              <div>Flight NB101 (ORD→ATL) delayed <span className="text-amber-400">+2h</span> by thunderstorm</div>
-              <div className="pl-4 text-muted-foreground/60">↳ N001NB arrives ATL late</div>
-              <div className="pl-8">↳ NB102 (ATL→MIA) delayed <span className="text-orange-400">+2h15m</span> (late inbound + turn)</div>
-              <div className="pl-12 text-muted-foreground/60">↳ N001NB arrives MIA late</div>
-              <div className="pl-16">↳ NB103 (MIA→ORD) delayed <span className="text-red-400">+2h30m</span></div>
-              <div className="pl-20 text-muted-foreground/60">…propagates for 18+ hours</div>
-            </div>
-          </div>
-        </Section>
-
-        <Separator />
-
-        {/* Optimizer */}
-        <Section id="optimizer" title="Recovery optimizer (MILP)" icon={BarChart3}>
-          <div className="space-y-6 text-muted-foreground">
-            <p>
-              The recovery optimizer is formulated as a <span className="text-foreground font-semibold">Mixed-Integer Linear Program</span> solved
-              by <span className="text-foreground font-semibold">Google OR-Tools CP-SAT</span>. It runs three times with different weight vectors
-              to produce Plans A, B, and C.
-            </p>
-
-            <div>
-              <h3 className="font-display font-semibold text-foreground mb-3">Decision variables</h3>
-              <div className="overflow-x-auto rounded-xl border border-border">
-                <table className="w-full">
-                  <thead className="bg-secondary/50">
-                    <tr>
-                      {["Variable", "Domain", "Meaning"].map(h => (
-                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <TableRow cells={["x[f]", "{0, 1}", "1 if flight f operates, 0 if cancelled"]} />
-                    <TableRow cells={["d[f]", "ℤ⁺ (slots)", "Delay in 15-min slots (0 = on time)"]} />
-                    <TableRow cells={["a[f][ac]", "{0, 1}", "1 if aircraft ac operates flight f"]} />
-                    <TableRow cells={["c[f][crew]", "{0, 1}", "1 if crew pairing operates flight f"]} />
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-display font-semibold text-foreground mb-3">Objective function</h3>
-              <CodeBlock>{`minimize  α·Σ(cancel_cost[f] · (1 − x[f]))        # Plan A: α=10
-        + β·Σ(pax_delay_min[f] · passengers[f])     # Plan B: β=10
-        + γ·Σ(crew_overtime_hours)                   #
-        + δ·Σ(aircraft_out_of_position_penalty)      # Plan C: δ=10
-
-Constants:
-  cancel_cost_per_flight = $15,000
-  pax_delay_cost_per_min = $1.50  (DOT methodology)
-  crew_overtime_per_hour = $450`}</CodeBlock>
-            </div>
-
-            <div>
-              <h3 className="font-display font-semibold text-foreground mb-3">Hard constraints</h3>
-              <ul className="space-y-2 text-sm">
-                {[
-                  "Aircraft continuity: if A operates f1 (lands at ORD at T), next flight must depart ORD ≥ T + min_turn_time",
-                  "FAR 117 duty limits: enforced as hard constraints via crew legality engine",
-                  "Airport capacity: Σ(departures/hour) ≤ airport.hourly_capacity",
-                  "Event constraints: no flight can depart/arrive at a closed airport during event window",
-                  "Each operating flight must have exactly one aircraft and one crew pairing",
-                ].map((c, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-primary mt-0.5">→</span>
-                    <span>{c}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="font-display font-semibold text-foreground mb-3">Weight configurations</h3>
-              <div className="overflow-x-auto rounded-xl border border-border">
-                <table className="w-full">
-                  <thead className="bg-secondary/50">
-                    <tr>
-                      {["Plan", "Objective", "α (cancel)", "β (pax)", "γ (crew)", "δ (position)"].map(h => (
-                        <th key={h} className="px-4 py-2 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <TableRow cells={["A", "Minimize cost", "10.0", "1.0", "5.0", "2.0"]} />
-                    <TableRow cells={["B", "Minimize pax impact", "1.0", "10.0", "2.0", "1.0"]} />
-                    <TableRow cells={["C", "Protect tomorrow", "2.0", "3.0", "2.0", "10.0"]} />
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <p className="text-sm">
-              Solver target: &lt;30 seconds on a single CPU for the 200-flight, 40-aircraft instance.
-              On timeout, falls back to a greedy nearest-aircraft swap heuristic and flags the plan as <code className="text-amber-400">heuristic</code>.
-            </p>
-          </div>
-        </Section>
-
-        <Separator />
-
-        {/* Cascade predictor */}
-        <Section id="predictor" title="Cascade predictor (XGBoost)" icon={BarChart3}>
-          <div className="space-y-6 text-muted-foreground">
-            <p>
-              An <span className="text-foreground font-semibold">XGBoost ensemble</span> (classifier + regressor) predicts, for each flight in the next 18 hours:
-              P(delay &gt; 15 min) and expected delay in minutes.
-            </p>
-
-            <div>
-              <h3 className="font-display font-semibold text-foreground mb-3">Feature set</h3>
-              <div className="overflow-x-auto rounded-xl border border-border">
-                <table className="w-full">
-                  <thead className="bg-secondary/50">
-                    <tr>
-                      {["Feature", "Description"].map(h => (
-                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase">{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      ["origin, destination", "Encoded airport IDs"],
-                      ["departure_hour, day_of_week", "Temporal features (high delay correlation)"],
-                      ["aircraft_type", "B737 vs A320 vs E175 — different turn times"],
-                      ["inbound_delay_minutes", "Critical cascade feature: how late is the inbound?"],
-                      ["origin/dest METAR", "Wind, visibility, ceiling, flight category (VFR/IFR/LIFR)"],
-                      ["event_distance_nm", "Proximity to active disruption polygon"],
-                      ["event_severity_encoded", "mild=0.4, moderate=0.7, severe=0.9, extreme=1.0"],
-                      ["crew_duty_remaining_min", "Hours remaining on crew's duty clock"],
-                      ["route_on_time_pct_90d", "Historical baseline: how often does this route run on time?"],
-                    ].map(([f, d]) => <TableRow key={f} cells={[f, d]} />)}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-border bg-secondary/30 p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Classifier target</div>
-                <div className="font-mono text-2xl font-bold text-primary">AUC &gt; 0.82</div>
-                <div className="text-xs text-muted-foreground mt-1">P(delay &gt; 15 min)</div>
-              </div>
-              <div className="rounded-xl border border-border bg-secondary/30 p-4">
-                <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Regressor target</div>
-                <div className="font-mono text-2xl font-bold text-primary">MAE &lt; 8 min</div>
-                <div className="text-xs text-muted-foreground mt-1">Expected delay minutes</div>
-              </div>
-            </div>
-
-            <p className="text-sm">
-              Training data: BTS On-Time Performance (2023–2024) joined with historical METAR archives.
-              Validate on 2025. When no trained model is present, falls back to deterministic rule-based propagation
-              with realistic cascade decay (severity × 0.4–0.9 multiplier).
-            </p>
-          </div>
-        </Section>
-
-        <Separator />
-
-        {/* Crew legality */}
-        <Section id="crew" title="Crew legality engine (FAR 117)" icon={Shield}>
-          <div className="space-y-6 text-muted-foreground">
-            <p>
-              The crew legality engine hard-codes <span className="text-foreground font-semibold">FAR Part 117</span> for 2-pilot passenger operations.
-              Every recovery plan is checked against these rules before being presented.
-            </p>
-
-            <div className="overflow-x-auto rounded-xl border border-border">
-              <table className="w-full">
-                <thead className="bg-secondary/50">
-                  <tr>
-                    {["Rule", "Limit", "FAR Reference"].map(h => (
-                      <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-muted-foreground uppercase">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {[
-                    ["Max flight time / FDP", "9 hours (2-pilot)", "117.65"],
-                    ["Flight Duty Period limit", "9–14h by report time", "117.13 Table B"],
-                    ["Min rest before FDP", "10 consecutive hours", "117.25(a)"],
-                    ["Max flight time / 7 days", "60 hours", "117.23(a)"],
-                    ["Max flight time / 28 days", "100 hours", "117.23(b)"],
-                    ["Max flight time / 365 days", "1,000 hours", "117.23(c)"],
-                    ["WOCL restriction", "0200–0559 local", "117.3, 117.13"],
-                  ].map(([r, l, f]) => <TableRow key={r} cells={[r, l, f]} />)}
-                </tbody>
-              </table>
-            </div>
-
-            <CodeBlock>{`# Usage
-engine = CrewLegalityEngine()
-
-result = engine.validate(
-    crew={
-        "duty_start": datetime(2024, 1, 15, 8, 0),
-        "flight_time_7d_minutes": 3420,  # 57h
-        "last_rest_end": datetime(2024, 1, 15, 7, 50),
-        ...
-    },
-    proposed_pairing={
-        "departure": datetime(2024, 1, 15, 9, 0),
-        "arrival":   datetime(2024, 1, 15, 11, 30),
-        "flight_time_minutes": 150,
+  const [active, setActive] = useState<string>(sections[0][0])
+  useEffect(() => {
+    const update = () => {
+      const passed = sections.filter(([id]) => (document.getElementById(id)?.getBoundingClientRect().top ?? Infinity) <= 180)
+      setActive(passed.at(-1)?.[0] ?? sections[0][0])
     }
-)
-
-result.is_legal          # → True
-result.violations        # → []
-result.warnings          # → ["Flight in WOCL window"]
-result.flight_time_remaining_minutes  # → 180`}</CodeBlock>
-          </div>
-        </Section>
-
-        <Separator />
-
-        {/* Data sources */}
-        <Section id="data" title="Data sources" icon={Database}>
-          <div className="space-y-4 text-muted-foreground">
-            {[
-              {
-                name: "aviationweather.gov (NOAA)",
-                desc: "Free, no API key. METAR observations for all 15 Nimbus airports, fetched every 5 minutes. Used for live weather layer on the map and as predictor features.",
-                usage: "Live",
-                endpoint: "https://aviationweather.gov/api/data/metar?ids=KORD,...&format=json",
-              },
-              {
-                name: "BTS On-Time Performance",
-                desc: "Historical training data for the XGBoost cascade predictor. 2023–2025 CSVs. Used only at build time.",
-                usage: "Training",
-                endpoint: "transtats.bts.gov",
-              },
-              {
-                name: "Nimbus Air (synthetic)",
-                desc: "40 aircraft, 200 daily flights, 60 crew pairings, 15 airports — fully generated by generate_network.py with seed=42 for reproducibility.",
-                usage: "Simulation",
-                endpoint: "data/network/*.yaml",
-              },
-            ].map((src) => (
-              <div key={src.name} className="rounded-xl border border-border bg-secondary/20 p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-display font-semibold text-foreground text-sm">{src.name}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 uppercase font-medium">{src.usage}</span>
-                </div>
-                <p className="text-sm mb-2">{src.desc}</p>
-                <code className="text-[10px] text-muted-foreground/60 font-mono">{src.endpoint}</code>
-              </div>
-            ))}
-          </div>
-        </Section>
-
-        <Separator />
-
-        {/* Architecture */}
-        <Section id="architecture" title="System architecture" icon={Cloud}>
-          <CodeBlock>{`                    ┌──────────────────────────────────────┐
-External data  →    │  Weather fetch (httpx + asyncio)     │
-                    └──────────────┬───────────────────────┘
-                                   ↓
-                    ┌──────────────────────────────────────┐
-                    │  PostgreSQL 16 + TimescaleDB         │
-                    │  Redis 7 (cache + task queue)        │
-                    └──────────────┬───────────────────────┘
-                                   ↓
-  ┌──────────────────┐  ┌─────────────────────┐  ┌─────────────────┐
-  │ CascadePredictor │→ │ RecoveryOptimizer   │→ │ CrewLegality    │
-  │ (XGBoost)        │  │ (OR-Tools CP-SAT)   │  │ Engine (FAR117) │
-  └──────────────────┘  └──────────┬──────────┘  └─────────────────┘
-                                   ↓
-                    ┌──────────────────────────────────────┐
-                    │  FastAPI (REST + WebSocket)          │
-                    │  ECS Fargate · 2 vCPU · 4GB         │
-                    └──────────────┬───────────────────────┘
-                                   ↓
-                    ┌──────────────────────────────────────┐
-                    │  Next.js 15 dashboard                │
-                    │  SVG map · Recharts · Zustand        │
-                    └──────────────────────────────────────┘`}</CodeBlock>
-        </Section>
-      </div>
-    </main>
-  )
+    update(); window.addEventListener("scroll", update, { passive: true })
+    return () => window.removeEventListener("scroll", update)
+  }, [])
+  const activeIndex = sections.findIndex(([id]) => id === active)
+  return <main className={s.page}>
+    <a href="#documentation" className={s.skip}>Skip to documentation</a>
+    <header className={s.header}><Link href="/" aria-label="Olus home"><OlusLogo size={32}/><strong>olus</strong></Link><nav aria-label="Primary"><Link href="/scenarios">Scenarios</Link><Link href="/faq">FAQ</Link><Link href="/simulator">Open workspace ↗</Link></nav></header>
+    <div className={s.layout}>
+      <article id="documentation" className={s.article}>
+        <header className={s.intro}><p>OLUS / MODEL DOCUMENTATION</p><h1>Read the plan.<br/>Inspect the model.</h1><p>How a simulated disruption becomes a set of recovery alternatives, and which assumptions sit behind the result.</p><small>Source review: <time dateTime={facts.verifiedAt}>{facts.verifiedAt}</time>. Source paths below identify the reviewed implementation; this is not a deployment or regulatory certification.</small></header>
+        <Section id="problem"><p>A closure or unavailable aircraft changes more than one departure. The same tail may be assigned to later flights; its delay can propagate through a rotation. Recovery requires comparing service, cost, aircraft position and crew constraints together.</p><p>Olus uses a synthetic airline network. Start with a scenario, inject an event, compare recovery plans and inspect changed flights before applying one. Public aircraft positions provide map context; they are not the synthetic schedule.</p><p>The canonical catalog currently contains <strong>{facts.disruptionTypes} disruption types</strong>. Each has parameters and normalization rules. Event coverage is a simulation approximation, not a claim to model every operational consequence.</p><p className={s.source}>Source: {facts.sources.events}</p><Link href="/faq#disruption-types">Read the event catalog scope ↗</Link></Section>
+        <Section id="optimizer"><p>The recovery optimizer uses <strong>{facts.solver}</strong>. Boolean decisions select cancellations and eligible spare-aircraft assignments. Delay estimates are inputs from cascade prediction, not freely optimized departure times.</p><div className={s.tableWrap}><table><caption>{facts.recoveryObjectives} recovery objectives, evaluated against the same disruption</caption><thead><tr><th scope="col">Plan</th><th scope="col">Objective</th><th scope="col">Inspect before applying</th></tr></thead><tbody>
+          <tr><th scope="row">A</th><td>Minimize Cost</td><td>Cancellation, delay and reposition costs</td></tr>
+          <tr><th scope="row">B</th><td>Minimize Passenger Impact</td><td>Passenger delay and service continuity</td></tr>
+          <tr><th scope="row">C</th><td>Protect Tomorrow&apos;s Schedule</td><td>Downline rotations and cancellations</td></tr>
+          <tr><th scope="row">D</th><td>Green Recovery</td><td>Carbon ledger, service impact and modeled EU ETS cost</td></tr>
+        </tbody></table></div><p>Financial totals are modeled exposure, not airline quotes. Compare the detailed cancellation, delay and reposition components. Carbon and passenger totals must be interpreted alongside cancellations: reducing service can reduce those totals without producing a better plan.</p><p>Inspect the returned status. <strong>Optimal</strong> means the solver proved the objective within this model. <strong>Feasible</strong> means it found a satisfying assignment without that proof. <strong>Heuristic</strong> identifies a fallback result; <strong>infeasible</strong> is not a dispatchable plan. A time limit alone does not establish optimality.</p><CodeBlock>{`RecoveryPlan
+  status: optimal | feasible | heuristic | infeasible
+  cancelled_flights / delayed_flights / aircraft_swaps
+  total_cost_usd / cost_breakdown
+  total_passenger_delay_minutes / crew_violations
+  total_co2_kg / carbon_breakdown / eu_ets_cost_usd
+  uncertainty: optional expected-cost and regret analysis`}</CodeBlock><p>For uncertain closure durations, inspect the expected cost, cost range and regret fields when returned. Do not interpret an absent uncertainty result as zero risk.</p><p className={s.source}>Source: {facts.sources.optimizer}; apps/api/src/optimizer/uncertain.py</p></Section>
+        <Section id="prediction"><p>The prediction layer estimates direct and downline delay before recovery optimization. Its implementation supports a trained predictor and rule-based propagation. Whether a trained model is available depends on the running installation; the site makes no claim about a deployed model&apos;s accuracy.</p><p>Direct disruption, first-order propagation and later cascade effects are separate states on the map and timeline. Compare the disrupted baseline with each candidate, then inspect the changed legs. A map animation illustrates the simulated movement; it is not recorded ADS-B history.</p><p>There is no published solve-time or prediction-accuracy guarantee on this page. Use measured run results and the stress-test tool with the scenario, machine and configuration recorded.</p><Link href="/simulator/stress-test">Open stress tests ↗</Link></Section>
+        <Section id="crew"><p>The crew engine implements selected checks inspired by FAR Part 117 using the supplied pairing and crew inputs. Its rule tables and exceptions are bounded by the implementation. A passed modeled check is not a comprehensive legal determination.</p><p>Review flight time, report time, duty duration, rest and cumulative inputs together. The aircraft-rotation ledger is explicitly a proxy where crew assignments are missing; it must not be read as an individual crew audit.</p><p>For a result, inspect the computed value, its implemented limit, remaining margin and the inputs used. Keep violations and warnings visible when comparing financial alternatives. Do not treat a cheaper plan as legal simply because it has a cost total.</p><p className={s.source}>Source: {facts.sources.crew}; apps/web/components/simulator/crew-legality-ledger.tsx</p><Link href="/simulator/crew">Open crew analysis ↗</Link></Section>
+        <Section id="data"><p><strong>Nimbus Air is synthetic.</strong> Network size depends on the loaded scenario. Read current schedule and fleet counts from the workspace instead of assuming a fixed demonstration size.</p><p>Optional public weather and ADS-B overlays are external context. Feed availability, stale observations and route metadata vary by provider. An inferred destination or heading projection is not a confirmed flight plan.</p><p>Deterministic recovery replay uses saved events, frozen weather snapshots, a seeded search and <strong>{facts.replayWorkers} solver worker</strong>. Normal search may use multiple workers and a wall-clock limit. Solve duration is measured separately from recovery equality.</p><p className={s.source}>Source: {facts.sources.optimizer}; apps/api/src/events/catalog.py</p><Link href="/faq#determinism">Read replay boundaries ↗</Link></Section>
+        <Section id="architecture"><p>The browser is a Next.js and React frontend. FastAPI serves simulator data and operations over HTTP and WebSocket. Python prediction, optimization and crew checks produce the recovery result; SQLite persists scenarios. Deployment topology is installation-specific.</p><CodeBlock>{`Synthetic schedule + event parameters
+                  |
+          Cascade prediction
+                  |
+       OR-Tools CP-SAT recovery
+          /               \\
+     Crew checks       Cost / carbon ledgers
+          \\               /
+            Recovery alternatives
+                  |
+       FastAPI HTTP + WebSocket
+                  |
+       Olus operations workspace`}</CodeBlock><p>Keep the API running when evaluating the workflow. A rendered landing demonstration does not prove the backend is connected. An offline banner or stale-data label is part of the result, not something to ignore.</p><Link href="/faq#run-locally">Local setup guidance ↗</Link></Section>
+        <nav className={s.pagination} aria-label="Documentation sections">{activeIndex > 0 ? <a href={`#${sections[activeIndex - 1][0]}`}>← {sections[activeIndex - 1][1]}</a> : <Link href="/">← Home</Link>}{activeIndex < sections.length - 1 ? <a href={`#${sections[activeIndex + 1][0]}`}>{sections[activeIndex + 1][1]} →</a> : <Link href="/faq">FAQ →</Link>}</nav>
+      </article>
+      <aside className={s.toc}><nav aria-label="On this page"><p>ON THIS PAGE</p>{sections.map(([id, title]) => <a key={id} href={`#${id}`} aria-current={active === id ? "location" : undefined}>{title}</a>)}</nav></aside>
+    </div>
+  </main>
 }

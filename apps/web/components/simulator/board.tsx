@@ -145,9 +145,8 @@ export const Module = forwardRef<
             display: "flex",
             alignItems: "center",
             gap: sp.xs,
-            // 28px, not 40. The head is a TAB, not a toolbar — it names the
-            // module and gets out of the way. Height is what buys the density.
-            height: 28,
+            // A title-only tab stays compact; action targets set their own height.
+            minHeight: 28,
             padding: `0 ${sp.sm}px`,
             borderBottom: RULE,
             background: c.surfaceSoft,

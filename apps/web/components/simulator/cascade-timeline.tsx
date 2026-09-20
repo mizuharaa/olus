@@ -276,6 +276,16 @@ export function CascadeTimeline({
             return (
               <div
                 key={flight.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={isSelected}
+                aria-label={`${flight.id}, ${flight.origin} to ${flight.destination}, ${flight.state.status}, delay ${flight.state.delay_minutes || 0} minutes`}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onFlightSelect(isSelected ? null : flight.id) }
+                  const rows = Array.from(e.currentTarget.parentElement?.querySelectorAll<HTMLElement>('[role="button"]') ?? [])
+                  const next = e.key === "ArrowDown" ? rowIdx + 1 : e.key === "ArrowUp" ? rowIdx - 1 : e.key === "Home" ? 0 : e.key === "End" ? rows.length - 1 : -1
+                  if (next >= 0 && next < rows.length) { e.preventDefault(); rows[next].focus() }
+                }}
                 onClick={() => onFlightSelect(isSelected ? null : flight.id)}
                 style={{
                   display: "flex",

@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useSimulationStore } from "@/stores/simulation"
 import { toWebSocketUrl } from "@/lib/backend-url"
 
@@ -29,83 +29,51 @@ async function resolveWsUrl(): Promise<string | null> {
 }
 
 export function useWebSocket() {
-  const ws = useRef<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
-  const { setUpdate } = useSimulationStore()
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
-  const pingTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined)
-  const isMounted = useRef(true)
-  const wsUrlRef = useRef<string | null>(null)
-
-  const connect = (url: string) => {
-    if (!isMounted.current) return
-    try {
-      const socket = new WebSocket(`${url}/ws/simulation`)
-      ws.current = socket
-
-      socket.onopen = () => {
-        if (!isMounted.current) return
-        setIsConnected(true)
-        pingTimer.current = setInterval(() => {
-          if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "ping" }))
-          }
-        }, 25_000)
-      }
-
-      socket.onmessage = (event) => {
-        try {
-          const msg = JSON.parse(event.data as string)
-          if (msg.type === "pong" || msg.type === "ping") return
-          if (isMounted.current) setUpdate(msg)
-        } catch (e) {
-          console.warn("[WS] parse error", e)
-        }
-      }
-
-      socket.onclose = () => {
-        if (!isMounted.current) return
-        setIsConnected(false)
-        clearInterval(pingTimer.current)
-        ws.current = null
-        reconnectTimer.current = setTimeout(() => {
-          if (wsUrlRef.current) connect(wsUrlRef.current)
-        }, 3_000)
-      }
-
-      socket.onerror = () => {
-        socket.close()
-      }
-    } catch {
-      if (!isMounted.current) return
-      setIsConnected(false)
-      reconnectTimer.current = setTimeout(() => {
-        if (wsUrlRef.current) connect(wsUrlRef.current)
-      }, 5_000)
-    }
-  }
-
   useEffect(() => {
-    isMounted.current = true
-
-    resolveWsUrl().then((url) => {
-      if (!isMounted.current || !url) return
-      wsUrlRef.current = url
-      connect(url)
-    })
-
-    return () => {
-      isMounted.current = false
-      clearTimeout(reconnectTimer.current)
-      clearInterval(pingTimer.current)
-      if (ws.current) {
-        ws.current.onclose = null
-        ws.current.close()
-        ws.current = null
+    // Each mount owns its URL lookup. A shared mounted ref can reactivate an
+    // earlier StrictMode lookup and create a second socket after remount.
+    let active = true
+    let socket: WebSocket | null = null
+    let retry: ReturnType<typeof setTimeout> | undefined
+    let ping: ReturnType<typeof setInterval> | undefined
+    const connect = (url: string) => {
+      if (!active) return
+      try {
+        const current = new WebSocket(`${url}/ws/simulation`)
+        socket = current
+        current.onopen = () => {
+          if (!active) return
+          setIsConnected(true)
+          ping = setInterval(() => {
+            if (current.readyState === WebSocket.OPEN) current.send(JSON.stringify({ type: "ping" }))
+          }, 25000)
+        }
+        current.onmessage = (event) => {
+          if (!active) return
+          try {
+            const message = JSON.parse(event.data as string)
+            if (message.type !== "pong" && message.type !== "ping") useSimulationStore.getState().setUpdate(message)
+          } catch (error) { console.warn("[WS] Invalid simulation message", error) }
+        }
+        current.onclose = () => {
+          clearInterval(ping)
+          if (!active) return
+          setIsConnected(false)
+          retry = setTimeout(() => connect(url), 3000)
+        }
+        current.onerror = () => current.close()
+      } catch {
+        if (active) { setIsConnected(false); retry = setTimeout(() => connect(url), 5000) }
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    resolveWsUrl().then(url => { if (active && url) connect(url) })
+    return () => {
+      active = false
+      clearTimeout(retry)
+      clearInterval(ping)
+      if (socket) { socket.onclose = null; socket.onmessage = null; socket.close() }
+    }
   }, [])
-
   return { isConnected }
 }

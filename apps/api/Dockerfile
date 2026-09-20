@@ -19,6 +19,8 @@ RUN poetry config virtualenvs.create false \
 # ── Stage 2: Production image ─────────────────────────────────────────────────
 FROM python:3.11-slim AS production
 WORKDIR /app
+ARG BUILD_SHA=local
+ENV BUILD_SHA=$BUILD_SHA
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl && rm -rf /var/lib/apt/lists/*

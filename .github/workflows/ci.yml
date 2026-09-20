@@ -1,13 +1,14 @@
 name: CI
 
 on:
+  workflow_call:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,8 +20,8 @@ jobs:
       run:
         working-directory: apps/api
 
-    # Olus is a fully in-memory simulator — no DB/cache/queue at runtime, so
-    # CI needs no service containers. Tests load the Nimbus network from YAML.
+    # SQLite and solver workers need no external service containers.
+    # Tests use isolated state and load the Nimbus network from YAML.
     env:
       PYTHONPATH: .
 
@@ -88,9 +89,15 @@ jobs:
       - name: Type check (tsc)
         run: npx tsc --noEmit
 
+      - name: Require versioned workspace routes
+        run: |
+          git ls-files --error-unmatch -- ':(literal)app/app/account/page.tsx' ':(literal)app/app/runs/[id]/page.tsx' ':(literal)app/app/scenarios/[id]/setup/page.tsx'
+
       - name: Lint (eslint)
-        run: npx eslint . --ext .ts,.tsx --max-warnings 0
-        continue-on-error: true
+        run: npm run lint
+
+      - name: Verify release and session boundaries
+        run: node scripts/check-release-boundaries.cjs
 
       - name: Build
         run: npm run build

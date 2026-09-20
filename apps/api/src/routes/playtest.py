@@ -68,8 +68,8 @@ class PlaytestEvent(BaseModel):
 
 
 class PlaytestRequest(BaseModel):
-    flights: list[PlaytestFlight]
-    aircraft: list[PlaytestAircraft] = Field(default_factory=list)
+    flights: list[PlaytestFlight] = Field(max_length=2000)
+    aircraft: list[PlaytestAircraft] = Field(default_factory=list, max_length=500)
     event: Optional[PlaytestEvent] = None
 
 
@@ -77,7 +77,7 @@ class PlaytestRequest(BaseModel):
 
 
 @router.post("/playtest/cascade")
-async def post_playtest_cascade(payload: PlaytestRequest, request: Request):
+def post_playtest_cascade(payload: PlaytestRequest, request: Request):
     """
     Run the cascade predictor + cost engine + carbon ledger on a user-built
     flight set. Returns the same predictions / cascade summary / cost

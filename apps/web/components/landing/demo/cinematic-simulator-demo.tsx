@@ -1,29 +1,6 @@
 "use client"
-/**
- * CinematicSimulatorDemo — the landing's centerpiece, played like a video.
- *
- * A ~25s GSAP timeline loops one full recovery loop on a light console
- * that mirrors the real simulator (paper floor, white cards, teal
- * identity, pink disruption):
- *
- *   1. the agent box types "Trigger weather closure at KORD, severity 4."
- *   2. the cursor opens the event selector and clicks Weather closure
- *   3. the camera flies to KORD; the marker pulses; the cascade draws out
- *   4. the plan inspector slides in; the cursor commits Plan B
- *   5. metrics count down, teal reroutes re-flow, toast lands, camera
- *      pulls back to the start framing so the loop cuts cleanly
- *
- * ── Two clocks ───────────────────────────────────────────────────────────
- * SCROLL choreographs the physical device — lid open, push-in, hold, pull
- * back, lid shut — because those beats should feel caused by the visitor.
- * The 25s recovery narrative runs on its own WALL CLOCK and is never
- * scrubbed: a scroll-scrubbed timeline freezes the agent mid-word the
- * moment anyone stops moving. Playback is gated to the window where the
- * push-in has actually made the panel readable. Chips seek it like chapters.
- *
- * The OCC surface is live DOM inside the laptop's lid; it is never a
- * reference-frame image or a baked video.
- */
+/** Scroll-owned recovery demonstration. One pin coordinates the device,
+ * headline, and four illustrative recovery stages; reduced motion stays static. */
 
 import {
   useCallback,
@@ -33,7 +10,7 @@ import {
   useState,
 } from "react"
 import { CloudLightning, FileText, LayoutGrid, Leaf, Route, Users } from "lucide-react"
-import { gsap } from "@/components/landing/gsap"
+import { gsap, ScrollTrigger } from "@/components/landing/gsap"
 import { OlusMark } from "@/components/ds/logo"
 import { DemoMap } from "@/components/landing/demo/demo-map"
 import { AgentCommandDemo } from "@/components/landing/demo/agent-command-demo"
@@ -51,7 +28,9 @@ import {
   bezPoint,
 } from "@/components/landing/demo/demo-data"
 import {
+  getLenis,
   landingScroll,
+  queueLandingRefresh,
   registerLandingFrame,
   resetLandingScene,
 } from "@/lib/scroll"
@@ -395,24 +374,15 @@ export function CinematicSimulatorDemo() {
         applyOpen(0, 0)
         openHandlerRef.current = applyOpen
 
-        // Playback runs on its own wall clock — never scrubbed — but only once
-        // the push-in has actually brought the panel up to a readable size.
-        // Starting it while the lid is still swinging wastes the opening beats
-        // of the narrative on a screen nobody can read yet.
-        tl.repeat(-1)
-        let playing = false
+        // One scroll position owns the device and all four recovery stages.
+        tl.repeat(0)
         const syncPlayback = () => {
           const progress = landingScroll.scenes.demo
-          const shouldPlay = progress > 0.36 && progress < 0.88 && !pausedRef.current && !document.hidden
-          if (shouldPlay === playing) return
-          playing = shouldPlay
-          if (shouldPlay) {
-            tl.play()
-            startFlights()
-          } else {
-            tl.pause()
-            stopFlights()
+          if (!pausedRef.current && !document.hidden) {
+            tl.pause().time(gsap.utils.clamp(0, 1, (progress - .25) / .6) * TOTAL, false)
           }
+          if (progress > .25 && progress < .9 && !pausedRef.current && !document.hidden) startFlights()
+          else stopFlights()
         }
         const unregisterPlaybackFrame = registerLandingFrame(syncPlayback)
 
@@ -425,9 +395,10 @@ export function CinematicSimulatorDemo() {
             demo: 1,
             ease: "none",
             scrollTrigger: {
+              id: "olus-demo",
               trigger: root,
               start: "top top",
-              end: mobile ? "+=240%" : "+=320%",
+              end: () => "+=" + window.innerHeight * 3.5,
               scrub: 1.1,
               pin: true,
               pinSpacing: true,
@@ -438,6 +409,7 @@ export function CinematicSimulatorDemo() {
           },
         )
 
+        queueLandingRefresh()
         const onResize = () => tl.invalidate()
         window.addEventListener("resize", onResize)
 
@@ -460,13 +432,14 @@ export function CinematicSimulatorDemo() {
     return () => mm.revert()
   }, [screenReady, staticMode])
 
-  /** Chapter seek. Keeps playing from the mark rather than parking there — a
-   *  chapter click on a video scrubs the video, it does not stop it. */
   const seekTo = (i: number) => {
-    const tl = tlRef.current
-    if (!tl) return
-    tl.seek(SCENE_STARTS[i] + 0.05)
-    if (!pausedRef.current) tl.play()
+    const trigger = ScrollTrigger.getById("olus-demo")
+    if (!trigger) return
+    pausedRef.current = false
+    setPaused(false)
+    const position = trigger.start + (.25 + (SCENE_STARTS[i] + .05) / TOTAL * .6) * (trigger.end - trigger.start)
+    if (getLenis()) getLenis()!.scrollTo(position, { immediate: true })
+    else window.scrollTo(0, position)
   }
 
   return (
@@ -476,8 +449,10 @@ export function CinematicSimulatorDemo() {
       aria-label="Simulator demo"
       className="dm-section"
       data-static={staticMode}
+      data-demo-scene="0"
       style={{ position: "relative" }}
     >
+      <noscript><style>{`.dm-section .dm-pin{display:none!important}.olus-demo-fallback{padding:64px 24px;max-width:68ch;margin:auto;font-size:18px;line-height:1.7}.olus-demo-fallback h2{font-size:36px}.olus-demo-fallback li{margin:20px 0}`}</style><div className="olus-demo-fallback"><h2>One disruption. Every decision, in view.</h2><p>Illustrative Nimbus Air recovery workflow.</p><ol><li>Command: select an airport and configure a weather closure.</li><li>Cascade: inspect the directly affected flights and the following rotations.</li><li>Solve: compare operating cost, passenger impact, next-day readiness and carbon alternatives.</li><li>Commit: review changed flights and crew checks before applying a plan.</li></ol><a href="/docs#optimizer">Read how recovery works</a></div></noscript>
       <div className="dm-pin">
         <div className="olus-demo-controls">
           <span>Illustrative recovery · Nimbus Air</span>
@@ -485,7 +460,7 @@ export function CinematicSimulatorDemo() {
             pausedRef.current = !pausedRef.current
             setPaused(pausedRef.current)
           }}>{paused ? "Play demo" : "Pause demo"}</button>}
-          {!staticMode && <button type="button" onClick={() => { tlRef.current?.seek(0); sceneRef.current = -1 }}>Replay</button>}
+          {!staticMode && <button type="button" onClick={() => seekTo(0)}>Replay</button>}
           <a href="/simulator">Open the workspace ↗</a>
         </div>
         {/* the text appears first, then dissolves into the animation */}

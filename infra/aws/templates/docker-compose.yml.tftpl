@@ -1,5 +1,5 @@
-# Rendered by terraform into /opt/olus/docker-compose.yml. Do not edit on the
-# box; edit infra/aws/templates/docker-compose.yml.tftpl and re-apply.
+# Rendered by Terraform on first boot and by Deploy AWS on every release.
+# Edit this template; do not edit /opt/olus/docker-compose.yml on the host.
 #
 # Unlike the repo-root docker-compose.yml this file builds nothing and mounts no
 # source: the image comes from ECR, and the only bind mount is the SQLite state
@@ -15,6 +15,8 @@ services:
       APP_ENV: production
       LOG_LEVEL: INFO
       CORS_ORIGINS: ${cors_origins}
+      OLUS_ACCOUNT_ORIGINS: ${cors_origins}
+      OLUS_COOKIE_SECURE: "true"
       # OpenSky blocks every cloud IP (Vercel and AWS both), so live traffic
       # comes from the community ADS-B feeds: adsb.lol, adsb.fi as fallback.
       ADSB_PROVIDER: adsblol

@@ -55,7 +55,7 @@ def _load_network(engine=None):
 
 
 @router.post("/recovery/solve")
-async def solve_recovery(payload: SolveRequest, request: Request):
+def solve_recovery(payload: SolveRequest, request: Request):
     """Run the recovery optimizer and return 3 plans."""
     optimizer = request.app.state.optimizer
     predictor = request.app.state.predictor
@@ -143,7 +143,7 @@ async def get_current_plans(request: Request):
 
 
 @router.post("/recovery/explain")
-async def explain_recovery_plan(payload: ExplainRequest, request: Request):
+def explain_recovery_plan(payload: ExplainRequest, request: Request):
     """
     Counterfactual explainer — Slice 5.
 
@@ -213,7 +213,7 @@ async def apply_recovery_plan(payload: ApplyRequest, request: Request):
 
 
 @router.post("/recovery/crew-overbooking")
-async def solve_crew_overbooking(request: Request):
+def solve_crew_overbooking(request: Request):
     """
     Run the crew overbooking MILP.
 

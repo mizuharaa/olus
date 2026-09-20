@@ -1,0 +1,36 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+const browser = await chromium.launch({channel:'msedge',headless:true});
+try {
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.goto('http://localhost:3001/docs');
+ await page.getByRole('heading',{name:/Recovery optimizer/}).waitFor();
+ assert.equal(await page.getByText('OR-Tools CP-SAT',{exact:true}).count(),1);
+ assert.equal(await page.getByRole('button',{name:'Copy',exact:true}).count(),2);
+ await page.context().grantPermissions(['clipboard-read','clipboard-write']);
+ await page.getByRole('button',{name:'Copy',exact:true}).first().click();
+ assert.match(await page.evaluate(()=>navigator.clipboard.readText()),/RecoveryPlan/);
+ await page.getByRole('navigation',{name:'On this page'}).getByRole('link',{name:'Crew checks'}).click();
+ await page.waitForTimeout(300);
+ assert.equal(await page.getByRole('navigation',{name:'On this page'}).getByRole('link',{name:'Crew checks'}).getAttribute('aria-current'),'location');
+ await page.screenshot({path:'../../docs/verification/docs-repaired-desktop.png',fullPage:true});
+ await page.setViewportSize({width:320,height:800});
+ assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+ await page.screenshot({path:'../../docs/verification/docs-repaired-mobile.png',fullPage:true});
+ await page.setViewportSize({width:1440,height:1000});
+ await page.goto('http://localhost:3001/');
+ await page.waitForTimeout(3500);
+ const before=await page.locator('[data-fly-plane]').evaluate(el=>getComputedStyle(el).transform);
+ await page.locator('#decisions').scrollIntoViewIfNeeded();await page.waitForTimeout(1800);
+ const after=await page.locator('[data-fly-plane]').evaluate(el=>getComputedStyle(el).transform);
+ assert.notEqual(before,after);
+ await page.screenshot({path:'../../docs/verification/flyover-repaired.png'});
+ const nojs=await browser.newContext({javaScriptEnabled:false});const staticPage=await nojs.newPage();
+ await staticPage.goto('http://localhost:3001/');
+ assert.equal(await staticPage.locator('.olus-demo-fallback li').count(),4);
+ assert.equal(await staticPage.locator('.olus-demo-fallback').isVisible(),true);
+ assert.equal(await staticPage.locator('.dm-pin').isVisible(),false);
+ assert.equal(errors.length,0,errors.join('\n'));
+ console.log('PASS: docs navigation, responsive layout, flyover movement, no-JS demo.');
+} finally {await browser.close()}

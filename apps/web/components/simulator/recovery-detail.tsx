@@ -40,6 +40,7 @@ function LedgerRow({
 }) {
   return (
     <div
+      className="ae-ledger-row"
       title={help}
       style={{
         display: "flex", alignItems: "center", gap: sp.xs,

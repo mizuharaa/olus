@@ -166,7 +166,6 @@ export function FlightDetailPanel({
           borderBottom: `1px solid ${c.hairline}`,
         }}
       >
-        <span aria-hidden style={{ width: 3, alignSelf: "stretch", background: OPS_BLUE, borderRadius: "0 3px 3px 0", flexShrink: 0 }} />
         <h2
           style={{
             flex: 1, minWidth: 0, margin: 0,
@@ -298,7 +297,6 @@ function ActionStrip({
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 2 }}>
-      <span aria-hidden style={{ width: 3, height: 13, background: OPS_BLUE, borderRadius: 2 }} />
       <span style={{ fontSize: 12, fontWeight: 600, color: c.ink }}>{children}</span>
     </div>
   )

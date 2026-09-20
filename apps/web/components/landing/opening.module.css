@@ -99,3 +99,8 @@
   .hero { transform:none!important; }
 }
 
+
+.liquid { position:absolute; top:50%; left:50%; width:240px; height:240px; margin:-120px; }
+.loadingCopy { position:absolute; top:calc(50% + 140px); width:100%; text-align:center; color:var(--text-mid); font-family:var(--font-mono),monospace; font-size:14px; }
+.loadingCopy button { background:none; border:0; color:inherit; font:inherit; min-height:44px; min-width:44px; cursor:pointer; text-underline-offset:6px; }
+.loadingCopy button:hover { text-decoration:underline; text-decoration-color:var(--recover); }

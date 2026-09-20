@@ -23,7 +23,14 @@ env:
   API_REPOSITORY: olus-api
 
 jobs:
+  checks:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+
   deploy:
+    needs: checks
+    if: github.ref == 'refs/heads/main'
     name: Build and deploy
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -56,6 +63,7 @@ jobs:
           file: apps/api/Dockerfile
           target: production
           platforms: linux/arm64
+          build-args: BUILD_SHA=${{ github.sha }}
           push: true
           tags: |
             ${{ steps.ecr.outputs.registry }}/${{ env.API_REPOSITORY }}:latest
@@ -67,15 +75,30 @@ jobs:
         id: ssm
         env:
           REGISTRY: ${{ steps.ecr.outputs.registry }}
+          API_CORS_ORIGINS: ${{ vars.API_CORS_ORIGINS || 'https://olus.sh,https://www.olus.sh' }}
+          API_LOG_GROUP: ${{ vars.API_LOG_GROUP || '/olus/app' }}
         run: |
           set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from string import Template
+          values = dict(api_image=f"{os.environ['REGISTRY']}/{os.environ['API_REPOSITORY']}:{os.environ['GITHUB_SHA']}", region=os.environ['AWS_REGION'], log_group=os.environ['API_LOG_GROUP'], cors_origins=os.environ['API_CORS_ORIGINS'])
+          template = Template(Path('infra/aws/templates/docker-compose.yml.tftpl').read_text())
+          Path('/tmp/olus-compose.yml').write_text(template.substitute({key: json.dumps(value) for key, value in values.items()}))
+          PY
           # Built as a file so the shell never has to quote JSON inside JSON.
-          jq -n --arg region "$AWS_REGION" --arg registry "$REGISTRY" '{
+          jq -n --arg region "$AWS_REGION" --arg registry "$REGISTRY" --rawfile compose /tmp/olus-compose.yml --rawfile backup infra/aws/backup.sh '{
             commands: [
               "set -euo pipefail",
               "aws ecr get-login-password --region \($region) | docker login --username AWS --password-stdin \($registry)",
+              "echo \($compose | @base64) | base64 -d > /opt/olus/docker-compose.next.yml",
+              "docker compose -f /opt/olus/docker-compose.next.yml config --quiet",
+              "mv /opt/olus/docker-compose.next.yml /opt/olus/docker-compose.yml",
               "docker compose -f /opt/olus/docker-compose.yml pull",
-              "docker compose -f /opt/olus/docker-compose.yml up -d",
+              "docker compose -f /opt/olus/docker-compose.yml up -d --wait --wait-timeout 180",
+              "echo \($backup | @base64) | base64 -d > /etc/cron.daily/olus-backup",
+              "chmod +x /etc/cron.daily/olus-backup",
               "docker image prune -f"
             ]
           }' > /tmp/ssm-params.json
@@ -98,7 +121,7 @@ jobs:
           for _ in $(seq 1 60); do
             STATUS=$(aws ssm get-command-invocation \
               --command-id '${{ steps.ssm.outputs.command_id }}' --instance-id "$ID" \
-              --query Status --output text)
+              --query Status --output text 2>/dev/null || true)
             echo "status: $STATUS"
             case "$STATUS" in
               Success) exit 0 ;;
@@ -118,10 +141,13 @@ jobs:
           set -euo pipefail
           URL="${{ vars.API_URL || 'https://api.olus.sh' }}/health"
           for i in $(seq 1 12); do
-            CODE=$(curl -s -o /dev/null -w '%{http_code}' "$URL" || true)
-            echo "attempt $i: $CODE"
-            [ "$CODE" = "200" ] && exit 0
+            BODY=$(curl -fsS "$URL" || true)
+            echo "health attempt $i"
+            if jq -e --arg sha "$GITHUB_SHA" '.status == "ok" and .revision == $sha' <<< "$BODY" >/dev/null; then
+              CODE=$(curl -s -o /dev/null -w '%{http_code}' "${URL%/health}/api/v1/account/session")
+              [ "$CODE" = "401" ] && exit 0
+            fi
             sleep 10
           done
-          echo "health check never returned 200 at $URL"
+          echo "Expected API revision and account route were not verified at $URL"
           exit 1

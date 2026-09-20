@@ -83,6 +83,8 @@ interface AdsbLolAircraft {
   baro_rate?: number
   squawk?: string
   r?: string
+  seen_pos?: number
+  observed_at?: number
 }
 
 async function fetchAdsb(url: string, timeoutMs: number): Promise<AdsbLolAircraft[]> {
@@ -95,8 +97,11 @@ async function fetchAdsb(url: string, timeoutMs: number): Promise<AdsbLolAircraf
       headers: { "User-Agent": "Olus/0.2 (github.com/mizuharaa/olus)" },
     })
     if (!res.ok) return []
-    const body = (await res.json()) as { ac?: AdsbLolAircraft[] }
-    return body.ac ?? []
+    const body = (await res.json()) as { ac?: AdsbLolAircraft[]; now?: number }
+    // adsb.lol's readsb-compatible response uses milliseconds for `now`.
+    const timestamp = typeof body.now === "number" && Number.isFinite(body.now)
+      ? (body.now > 1e12 ? body.now / 1000 : body.now) : Date.now() / 1000
+    return (body.ac ?? []).map(ac => ({ ...ac, observed_at: timestamp - (typeof ac.seen_pos === "number" && Number.isFinite(ac.seen_pos) ? Math.max(0, ac.seen_pos) : 60) }))
   } catch {
     return []
   } finally {
@@ -114,6 +119,12 @@ export async function GET() {
   if (aircraft.length === 0) {
     aircraft = await fetchAdsb(ADSB_LOL_URL_NARROW, 6000)
   }
+  if (aircraft.length === 0) {
+    return NextResponse.json(
+      { flights: [], error: "Live traffic is unavailable. Retained positions may be stale." },
+      { status: 503, headers: { "Cache-Control": "no-store" } }
+    )
+  }
 
   const flights = []
   for (const ac of aircraft) {
@@ -122,7 +133,7 @@ export async function GET() {
 
     const lat = ac.lat
     const lon = ac.lon
-    if (lat == null || lon == null) continue
+    if (lat == null || lon == null || !Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat)>90 || Math.abs(lon)>180) continue
 
     // Skip ground traffic (alt_baro is the string "ground" when on ground)
     const onGround = ac.alt_baro === "ground" || ac.alt_baro === 0
@@ -154,7 +165,7 @@ export async function GET() {
       heading: ac.track ?? null,
       vertical_fpm: ac.baro_rate != null ? Math.round(ac.baro_rate) : null,
       squawk: ac.squawk ?? null,
-      last_contact: Math.floor(Date.now() / 1000),
+      last_contact: ac.observed_at,
       tracking: {
         flightaware: callsignRaw
           ? `https://www.flightaware.com/live/flight/${callsignRaw}`

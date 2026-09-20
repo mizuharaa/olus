@@ -1,23 +1,5 @@
 import type { ReactNode } from "react"
-import { SimulatorRail } from "@/components/simulator/rail"
-
-/**
- * Shared shell for every /simulator route: a collapsible left icon-rail
- * (primary section nav) with the page to its right. The rail is sticky and
- * full-height; page content flexes into the remaining width.
- */
+import { WorkspaceShell } from "@/components/workspace/workspace-shell"
 export default function SimulatorLayout({ children }: { children: ReactNode }) {
-  return (
-    // `simulator-shell` is the scope the baseline focus-visible rule in
-    // globals.css hangs off, so every control under /simulator gets a visible
-    // keyboard ring by default instead of each component opting in (which is
-    // how the ring ended up defined but applied in only two places).
-    <div
-      className="simulator-shell"
-      style={{ display: "flex", alignItems: "flex-start", minHeight: "100dvh", background: "var(--ae-bg)" }}
-    >
-      <SimulatorRail />
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
-    </div>
-  )
+  return <WorkspaceShell><div className="simulator-shell" style={{height:"100%",overflow:"auto"}}>{children}</div></WorkspaceShell>
 }

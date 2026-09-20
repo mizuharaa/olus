@@ -90,7 +90,7 @@ export const pigment = {
  *
  * The ramp used to run dark→light because it was drawn on warm paper: the
  * worst cascade generation was the heaviest ink. On the #14161C console floor
- * that reads backwards — `direct` at #3A2408 measures 1.4:1 against the panel,
+ * that reads backwards — `direct` at #C2560F measures 1.4:1 against the panel,
  * so the MOST severe step would be the least visible thing on screen. Severity
  * now runs light→dark: the hit itself is the brightest mark in the frame.
  *
@@ -109,9 +109,9 @@ export const pigment = {
  * of something that was hit". See scripts/check-contrast.mjs.
  */
 export const cascade = {
-  direct: { fill: "#FFD07A", border: "#FFD07A", glyph: "0" }, // the hit itself — brightest mark on the console
-  order1: { fill: "#9E6726", border: "#B87C33", glyph: "1" },
-  order2: { fill: "#2E2718", border: "#7D6437", glyph: "2" }, // dark fill, border holds 3:1 vs surface
+  direct: { fill: "#FF7A1A", border: "#FF7A1A", glyph: "0" }, // the hit itself — brightest mark on the console
+  order1: { fill: "#C2560F", border: "#FF7A1A", glyph: "1" },
+  order2: { fill: "#1A222D", border: "#FF7A1A", glyph: "2" }, // dark fill, border holds 3:1 vs surface
   none:   { fill: "#1E222A", border: "#5C6474", glyph: "" },  // nominal — quiet, still bounded
   // Cancelled is never a hue (design.md): neutral + a dashed edge at the mark.
   cancelled: { fill: "#191D24", border: "#7C8494", glyph: "✕" },
@@ -132,11 +132,11 @@ export const cascade = {
  * channel that survives monochrome and colour blindness in both registers.
  */
 export const cascadeLight = {
-  direct: { fill: "#3A2408", border: "#3A2408", glyph: "0" },
-  order1: { fill: "#9C6C28", border: "#9C6C28", glyph: "1" },
-  order2: { fill: "#E9D6B6", border: "#7E5A1C", glyph: "2" }, // pale fill, border holds 3:1
-  none:   { fill: "#E8E2D4", border: "#7C7568", glyph: "" },
-  cancelled: { fill: "#EDEAE3", border: "#7C7568", glyph: "✕" },
+  direct: { fill: "#C2560F", border: "#C2560F", glyph: "0" },
+  order1: { fill: "#C2560F", border: "#C2560F", glyph: "1" },
+  order2: { fill: "#FF7A1A", border: "#C2560F", glyph: "2" }, // pale fill, border holds 3:1
+  none:   { fill: "#ECE8E1", border: "#6B7785", glyph: "" },
+  cancelled: { fill: "#EDEAE3", border: "#6B7785", glyph: "✕" },
 } as const
 
 export type CascadeRamp = typeof cascade

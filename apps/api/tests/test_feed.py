@@ -10,6 +10,8 @@ from src.data.feed import LiveFlightFeed
 async def test_stale_readers_share_refresh_and_back_off():
     feed = LiveFlightFeed(cache_ttl=120)
     feed._cache = [{"icao24": "retained"}]
+    feed._cache_ts = time.monotonic() - 121
+    feed._last_fetch_attempt = time.monotonic() - 61
     feed._fetch_flights = AsyncMock(return_value=None)
     await asyncio.gather(*(feed.get_us_flights() for _ in range(30)))
     await asyncio.sleep(0)

@@ -421,3 +421,4 @@ apps/web/shots/
 
 # Isolated browser integration build
 apps/web/.next-account-check/
+apps/web/.next-scenario-check/

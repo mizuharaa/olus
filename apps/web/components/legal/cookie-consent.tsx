@@ -12,12 +12,22 @@
  */
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 const KEY = "olus-cookie-consent"
 
 export function CookieConsent() {
   const [open, setOpen] = useState(false)
+  const banner = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open || !banner.current) return
+    const update = () => document.documentElement.style.setProperty("--consent-height", `${banner.current?.getBoundingClientRect().height ?? 0}px`)
+    const observer = new ResizeObserver(update)
+    observer.observe(banner.current)
+    update()
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty("--consent-height") }
+  }, [open])
 
   useEffect(() => {
     try {
@@ -40,6 +50,7 @@ export function CookieConsent() {
 
   return (
     <div
+      ref={banner}
       role="dialog"
       aria-label="Cookie preferences"
       aria-live="polite"

@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { spawn, execFileSync } from 'node:child_process';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { resolve, join } from 'node:path';
 import { randomBytes } from 'node:crypto';
@@ -22,6 +22,32 @@ try{
  assert.equal((await context.request.patch('http://localhost:3002/api/v1/account/profile',{data:{name:'No CSRF'}})).status(),403);
  await page.getByLabel('Display name').fill('Saved browser profile');await page.getByRole('heading',{name:'Preferences',exact:true}).click();await page.getByText('Preferences saved',{exact:true}).waitFor();
  const session=await (await context.request.get('http://localhost:3002/api/v1/account/session')).json();assert.equal(session.user.name,'Saved browser profile');
+ const evidence=join(repo,'docs/verification/dashboard');mkdirSync(evidence,{recursive:true});
+ await page.setViewportSize({width:320,height:900});
+ await page.waitForFunction(()=>{
+  const banner=document.querySelector('[aria-label="Cookie preferences"]')?.getBoundingClientRect();
+  const toasts=[...document.querySelectorAll('[data-sonner-toast][data-visible="true"]')];
+  return banner&&toasts.length&&toasts.every(e=>e.getBoundingClientRect().bottom<=banner.y-15);
+ });
+ const close=page.locator('[data-sonner-toast][data-visible="true"] [data-close-button]').first();
+ assert.ok(await close.evaluate(e=>{const r=e.getBoundingClientRect();const top=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return r.width>=44&&r.height>=44&&(e===top||e.contains(top))}),'Toast close target must be visible and 44px');
+ await page.screenshot({path:join(evidence,'layout-320-notifications.png')});
+ await page.getByRole('button',{name:'Essential only',exact:true}).click();
+ await page.mouse.move(0,0);
+ await page.waitForFunction(()=>document.querySelectorAll('[data-sonner-toast]').length===0);
+ for(const width of [320,768,1440]){
+  await page.setViewportSize({width,height:900});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,`${width}: account overflow`);
+  await page.screenshot({path:join(evidence,`layout-${width}-account.png`)});
+ }
+ await page.getByRole('main').getByLabel('Theme').selectOption('light');
+ await page.waitForFunction(()=>document.querySelector('[data-density][data-theme="light"]'));
+ assert.equal(await page.getByLabel('Display name').evaluate(e=>getComputedStyle(e).color),'rgb(10, 14, 20)');
+ assert.equal(await page.getByText('Account workspace',{exact:true}).locator('../..').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(247, 245, 241)');
+ assert.equal(await page.getByLabel('Display name').evaluate(e=>getComputedStyle(e).getPropertyValue('--ink-600').trim()),'#ECE8E1');
+ await page.screenshot({path:join(evidence,'layout-1440-account-light.png')});
+ await page.getByRole('main').getByLabel('Theme').selectOption('dark');
+ await page.waitForFunction(()=>document.querySelector('[data-density][data-theme="dark"]'));
  // A second tab replaces the cookie while this page still holds the old CSRF token.
  assert.equal((await context.request.post('http://localhost:3002/api/v1/account/login',{data:{email,password}})).status(),200);
  await page.getByLabel('Key name').fill('Browser integration');await page.getByRole('button',{name:'Create key',exact:true}).click();const secret=page.locator('[role="status"] code');await secret.waitFor();const first=await secret.textContent();assert.ok(first.startsWith('olus_'));

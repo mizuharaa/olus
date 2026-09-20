@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {resolve,join} from 'node:path';
 import {randomBytes} from 'node:crypto';
 import assert from 'node:assert/strict';
+import {checkWorkspaceLayout} from './check-workspace-layout.mjs';
 const web=process.cwd(),api=resolve(web,'../api'),repo=resolve(web,'../..'),dir=mkdtempSync(join(tmpdir(),'olus-scenario-check-'));
 const email='scenario-check@example.test',password=randomBytes(24).toString('base64url');
 const env={...process.env,PYTHONPATH:[api,join(repo,'.venv-aeolus/Lib/site-packages')].join(';'),OLUS_ACCOUNT_DB:join(dir,'accounts.sqlite3'),OLUS_COOKIE_SECURE:'false',OLUS_ACCOUNT_ORIGINS:'http://localhost:3002',CHECK_EMAIL:email,CHECK_PASSWORD:password,CHECK_DIR:dir};
@@ -27,5 +28,7 @@ try{
  const evidence=resolve(repo,'docs/verification/dashboard');mkdirSync(evidence,{recursive:true});await page.screenshot({path:join(evidence,'scenario-review.png'),fullPage:true});await page.getByRole('button',{name:'Save and run recovery'}).click();await page.waitForURL('**/app/runs/*');const runId=new URL(page.url()).pathname.split('/').at(-1);
  let run;for(let i=0;i<100;i++){run=await (await context.request.get('http://localhost:3002/api/v1/runs/'+runId)).json();if(['completed','failed','timed_out'].includes(run.status))break;await new Promise(r=>setTimeout(r,1000))}assert.equal(run.status,'completed',run.error);assert.equal(run.result.schedule.find(f=>f.id==='NB101').passengers,101);assert.equal(run.result.recovery_plans.length,4);
  await page.getByRole('link',{name:/Inspect recovery on map/}).click();await page.waitForURL('**/app/overview?run=*');await page.getByRole('button',{name:/Recovery/}).first().waitFor();await page.screenshot({path:join(evidence,'scenario-private-map.png')});assert.deepEqual(sharedMutations,[]);
+ await checkWorkspaceLayout(page,evidence);
+ assert.deepEqual(sharedMutations,[]);
  writeFileSync(join(evidence,'scenario-integration.json'),JSON.stringify({passed:true,steps:6,editedPassengers:101,plans:4,runStatus:run.status,sharedMutations,ownerScoped:true},null,2));console.log('PASS: signed-in six-step save, isolated solver, edited input snapshot, four recovery plans, private map, no shared simulation mutation.');
 }catch(e){console.error(logs.slice(-4000));throw e}finally{await browser?.close();for(const c of [frontend,backend])if(c.pid)try{execFileSync('taskkill',['/pid',String(c.pid),'/T','/F'],{stdio:'ignore',windowsHide:true})}catch{}}

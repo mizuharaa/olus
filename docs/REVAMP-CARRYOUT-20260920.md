@@ -76,3 +76,20 @@ node scripts/check-release.mjs https://olus.sh https://api.olus.sh EXPECTED_COMM
 ```
 
 This checks both service revisions, the workspace pages, and unauthenticated refusal on private APIs through both origins. It does not create accounts, keys, scenarios or runs on production.
+
+
+## Mobbin research and measured layout checkpoint
+
+The September 20 follow-up researched nine component groups through Mobbin MCP, inspected and saved 31 full-resolution images, checked Dribbble popular/recent/aviation results and Awwwards nominees, and measured the public Intercom/Linear navigation DOM. Rankings are discovery signals; the available Mobbin tool does not establish newest/most-popular ordering.
+
+- [Research and source decisions](OLUS-UI-RESEARCH-20260920.md), [31-image source board](reference/ui-20260920/index.html), and [seven exact implementation prompts](OLUS-UI-PROMPTS.md).
+- [Real application screenshot review](verification/dashboard/ui-review-20260920.html) and [raw geometry](verification/dashboard/workspace-layout.json).
+- [Claude layout source review and dispositions](verification/claude-layout-20260920.md). Its findings are static inferences; runtime results are recorded separately.
+
+Implemented the shared floating-tool grid, intrinsic wrapping toolbar rows, true centered desktop navigation, visible mobile navigation, explicit Account & API keys destination, scenario/account content rails, bounded dialogs, and theme-aware fields/status/selection surfaces. Recovery keeps its commit action visible while the table scrolls. The shared inspector header grows to fit its controls. CSS prevents competing panels after a desktop-to-tablet resize. Workspace notifications use one bounded stack, internal 44px dismiss targets, and a measured offset above the consent banner; the marketing layout retains its existing presentation.
+
+Fresh isolated browser checks pass all seven widths (320, 390, 768, 1024, 1280, 1440, 1920), nav centering within 1px, common rails, control hit tests, Events/Recovery/Inspector separation, desktop-to-tablet resizing, timeline, command search and tool menu bounds. Account checks cover 320/768/1440, light-theme computed colors, mobile consent/toast separation, and the full authenticated key lifecycle. The six-step scenario check still solves the edited real input into four private recovery plans without mutating the shared demo.
+
+This supersedes the earlier lack of fresh mobile screenshots for these covered routes. It does not certify the blocked composed production suite, all tool/empty/error states, 200% zoom, full keyboard/axe coverage or hardware performance. Benchmark/card refinement, remaining original product features and production parity remain open. No production release is claimed by this layout checkpoint.
+
+The production Next build after these layout changes passes, including lint and TypeScript validation. The same six existing lint warnings remain.

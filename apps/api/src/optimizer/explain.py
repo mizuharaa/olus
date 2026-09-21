@@ -8,7 +8,7 @@ ledger so the UI can show the trade-off as a glass box rather than a black box.
 
 This deliberately does *not* re-run the CP-SAT solver. Counterfactuals are
 single-decision flips evaluated through the same cost + carbon engines that
-score the original plan, so they're cheap (<1 ms) and always consistent with
+score the original plan, using the same scenario assumptions as
 what the dashboard already reports.
 """
 
@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from src.costs.calculator import AirlineDelayCalculator
+from src.costs.calculator import AIRCRAFT_REPOSITION_COST_USD, AirlineDelayCalculator
 from src.costs.carbon import portfolio_carbon
 
 _calc = AirlineDelayCalculator()
@@ -69,7 +69,7 @@ def _plan_ledgers(
         event_kind=event_kind,
         aircraft_type_map=ac_type_map,
     )
-    swap_cost = len(swaps) * 8_000  # mirrors AIRCRAFT_REPOSITION_COST in milp.py
+    swap_cost = len(swaps) * AIRCRAFT_REPOSITION_COST_USD
     cost_usd = cost_data["grand_total_usd"] + swap_cost
 
     carbon = portfolio_carbon(
@@ -113,9 +113,9 @@ def explain_plan(
         event_kind,
     )
 
-    # Identify the highest-impact decisions to flip.
-    cancelled_ids = list(plan.get("cancelled_flights") or [])[:top_n]
-    delayed_ids = [d["flight_id"] for d in (plan.get("delayed_flights") or [])][:top_n]
+    # ponytail: full rescoring is O(n²); use per-flight ledger deltas if large-network profiling warrants it.
+    cancelled_ids = list(plan.get("cancelled_flights") or [])
+    delayed_ids = [d["flight_id"] for d in (plan.get("delayed_flights") or [])]
 
     counterfactuals: list[Counterfactual] = []
 
@@ -159,7 +159,9 @@ def explain_plan(
             "delayed_flights": [
                 d for d in (plan.get("delayed_flights") or []) if d.get("flight_id") != fid
             ],
-            "aircraft_swaps": list(plan.get("aircraft_swaps") or []),
+            "aircraft_swaps": [
+                swap for swap in (plan.get("aircraft_swaps") or []) if swap.get("flight_id") != fid
+            ],
         }
         cf_cost, cf_pax, cf_co2, cf_ets = _plan_ledgers(
             cf_plan,
@@ -188,6 +190,11 @@ def explain_plan(
 
     return {
         "plan_id": plan.get("plan_id"),
+        "comparison_kind": "single_decision_ledger_estimate",
+        "feasibility_checked": False,
+        "estimate_only": True,
+        "carbon_charge_delta_basis": "difference_of_zero_floored_scenario_charges_not_marginal_carbon_price",
+        "decisions_evaluated": len(counterfactuals),
         "base_cost_usd": round(base_cost, 2),
         "base_pax_delay_min": base_pax,
         "base_co2_kg": round(base_co2, 1),
@@ -202,13 +209,13 @@ def _summarise(fid: str, flip: str, dcost: float, dpax: int, dco2: float) -> str
     co2_word = "saves" if dco2 < 0 else "burns"
     if flip == "cancel→keep":
         return (
-            f"Keeping {fid} alive would cost ${abs(dcost):,.0f} more, "
-            f"add {dpax:+,} pax-delay-min, and {co2_word} {abs(dco2):.0f} kg CO₂."
+            f"Keeping {fid} {cost_word} an estimated ${abs(dcost):,.0f}, "
+            f"changes known pax-delay-min by {dpax:+,}, and {co2_word} {abs(dco2):.0f} kg CO₂."
         )
     if flip == "keep→cancel":
         return (
             f"Cancelling {fid} {cost_word} ${abs(dcost):,.0f}, "
-            f"changes pax-delay-min by {dpax:+,}, and {co2_word} {abs(dco2):.0f} kg CO₂."
+            f"changes known pax-delay-min by {dpax:+,}, and {co2_word} {abs(dco2):.0f} kg CO₂."
         )
     return f"{fid}: {flip}"
 
@@ -226,8 +233,8 @@ def _build_rationale(
 
     if not counterfactuals:
         return (
-            f"Plan {plan_id} requires no actions — the schedule is already optimal "
-            f"for this disruption profile."
+            f"Plan {plan_id} has no cancellation/delay decisions to compare. "
+            f"This does not establish feasibility or optimality."
         )
 
     # Identify the dominant flip direction
@@ -236,26 +243,28 @@ def _build_rationale(
 
     parts = [
         f"Plan {plan_id} cancels {n_cancel} flight{'s' if n_cancel != 1 else ''} and delays {n_delay}, "
-        f"for a total of ${base_cost:,.0f} and {base_co2/1000:+.1f} tCO₂e net."
+        f"for an estimated economic impact of ${base_cost:,.0f} and {base_co2/1000:+.1f} tCO₂ net change."
     ]
     if cancel_to_keep:
-        worst = max(cancel_to_keep, key=lambda c: c.delta_cost_usd)
+        worst = max(cancel_to_keep, key=lambda c: abs(c.delta_cost_usd))
         parts.append(
             f"Of the cancellations, {worst.flight_id} is the most consequential: "
-            f"keeping it alive would have added ${worst.delta_cost_usd:,.0f} (mostly DOT 261 + "
-            f"crew overtime) and {worst.delta_pax_delay_min:+,} passenger-delay-minutes."
+            f"keeping it changes the modeled cost by ${worst.delta_cost_usd:+,.0f} "
+            f"and known passenger-delay-minutes by {worst.delta_pax_delay_min:+,}."
         )
     if keep_to_cancel:
         cheapest_to_cancel = min(keep_to_cancel, key=lambda c: c.delta_cost_usd)
         if cheapest_to_cancel.delta_cost_usd < 0:
             parts.append(
                 f"Conversely, cancelling {cheapest_to_cancel.flight_id} would have saved "
-                f"${abs(cheapest_to_cancel.delta_cost_usd):,.0f} — the optimizer kept it because "
-                f"the passenger-impact penalty made cancellation suboptimal under this plan's weights."
+                f"an estimated ${abs(cheapest_to_cancel.delta_cost_usd):,.0f} in this ledger comparison."
             )
         else:
             parts.append(
-                f"Holding {cheapest_to_cancel.flight_id} as a delay (rather than cancelling) is "
-                f"correct: cancelling would have *added* ${cheapest_to_cancel.delta_cost_usd:,.0f}."
+                f"Cancelling {cheapest_to_cancel.flight_id} instead of delaying it would "
+                f"add an estimated ${cheapest_to_cancel.delta_cost_usd:,.0f}."
             )
+    parts.append(
+        "These decision flips are not feasibility-checked alternatives; use a what-if re-solve. Cancelled-passenger arrival times may be unknown."
+    )
     return " ".join(parts)

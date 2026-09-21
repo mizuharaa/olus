@@ -17,9 +17,23 @@ from src.data.opensky import OpenSkyClient
 from src.network import cache
 from src.optimizer.milp import RecoveryOptimizer
 from src.predictor.cascade import CascadePredictor
-from src.routes import agent, events, live, network, playtest, predict, recovery, simulator, weather
+from src.routes import (
+    account,
+    agent,
+    events,
+    live,
+    network,
+    playtest,
+    predict,
+    recovery,
+    runs,
+    scenario_workspaces,
+    simulator,
+    weather,
+)
 from src.routes.flights import router as flights_router
 from src.routes.passengers import router as passengers_router
+from src.services.run_manager import RunManager
 from src.simulator.engine import SimulationEngine
 from src.store.repository import ScenarioRepository, default_db_path
 from src.weather.client import WeatherClient
@@ -238,7 +252,9 @@ async def lifespan(app: FastAPI):
     # every transition so a restart mid-disruption doesn't lose them.
     repo_path = default_db_path()
     repository = ScenarioRepository(repo_path)
-    engine = SimulationEngine(flights, aircraft, crews, repository=repository)
+    engine = SimulationEngine(
+        flights, aircraft, crews, repository=repository, crew_members=cache.get_crew_members()
+    )
     if engine.restore_from_repository():
         logger.info("Resumed scenario %s from %s", engine.scenario_id, repo_path)
 
@@ -249,6 +265,7 @@ async def lifespan(app: FastAPI):
     app.state.engine = engine
     app.state.opensky = live_feed
     app.state.repository = repository
+    app.state.run_manager = RunManager(default_db_path().with_name("olus-runs.db"))
 
     # Background tasks
     asyncio.create_task(weather_client.fetch_metars())
@@ -267,6 +284,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
+    app.state.run_manager.close()
     await weather_client.close()
     repository.close()
     logger.info("Olus API shut down cleanly")
@@ -305,6 +323,9 @@ app.add_middleware(
 # Include routers — flights_router must come before network.router because
 # network.router registers GET /flights/{flight_id} which would otherwise
 # shadow the explicit /flights/live and /flights/search routes.
+app.include_router(account.router, prefix="/api/v1")
+app.include_router(scenario_workspaces.router, prefix="/api/v1")
+app.include_router(runs.router, prefix="/api/v1")
 app.include_router(flights_router, prefix="/api/v1", tags=["flights"])
 app.include_router(network.router, prefix="/api/v1", tags=["network"])
 app.include_router(events.router, prefix="/api/v1", tags=["events"])

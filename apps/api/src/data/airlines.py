@@ -217,14 +217,16 @@ AIRCRAFT_DB: dict[str, dict] = {
         "range_nm": 4000,
         "category": "narrowbody",
     },
-    # Wide-body — Boeing
+    # Boeing identifies the 757 as single-aisle, not widebody:
+    # https://secure.boeingimages.com/archive/757-200-Taxis-Toward-its-First-Flight-2F3XC5G9AB0.html
+    # https://boeing.mediaroom.com/news-releases-statements?item=123583
     "B752": {
         "name": "Boeing 757-200",
         "seats": 200,
         "block_hr_usd": 4_800,
         "min_turn_min": 55,
         "range_nm": 3915,
-        "category": "widebody",
+        "category": "narrowbody",
     },
     "B753": {
         "name": "Boeing 757-300",
@@ -232,8 +234,9 @@ AIRCRAFT_DB: dict[str, dict] = {
         "block_hr_usd": 5_100,
         "min_turn_min": 60,
         "range_nm": 3395,
-        "category": "widebody",
+        "category": "narrowbody",
     },
+    # Wide-body — Boeing
     "B762": {
         "name": "Boeing 767-200",
         "seats": 224,
@@ -457,9 +460,19 @@ AIRCRAFT_DB: dict[str, dict] = {
 }
 
 
+AIRCRAFT_TYPE_ALIASES = {"B737-800": "B738", "B757-200": "B752"}
+
+
+def resolve_aircraft_type(aircraft_type: str) -> str:
+    """Resolve known seed-fleet names/ICAO keys; never guess unknown variants."""
+    key = aircraft_type.strip().upper()
+    key = AIRCRAFT_TYPE_ALIASES.get(key, key)
+    return key if key in AIRCRAFT_DB else "UNKN"
+
+
 def get_aircraft_info(icao_type: str) -> dict:
-    """Return aircraft info, falling back to UNKN default."""
-    return AIRCRAFT_DB.get(icao_type.upper(), AIRCRAFT_DB["UNKN"])
+    """Return aircraft info for a known type/alias, otherwise the UNKN model."""
+    return AIRCRAFT_DB[resolve_aircraft_type(icao_type)]
 
 
 def callsign_to_iata_flight(callsign: str) -> tuple[str, str]:

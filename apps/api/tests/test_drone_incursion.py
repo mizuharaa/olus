@@ -156,7 +156,9 @@ FLIGHTS = [
     },
     {
         "id": "NB202",
-        "aircraft_id": "N001NB",
+        # Independent tail keeps this uncertainty-ledger fixture feasible
+        # when another candidate cancels NB201; no implicit ferry required.
+        "aircraft_id": "N003NB",
         "origin": "KATL",
         "destination": "KMIA",
         "scheduled_departure": "2024-01-15T16:30:00Z",
@@ -175,8 +177,27 @@ FLIGHTS = [
 ]
 
 AIRCRAFT = [
-    {"id": "N001NB", "type": "B737-800", "base_airport_id": "KDEN", "seats": 162},
-    {"id": "N002NB", "type": "B737-800", "base_airport_id": "KDEN", "seats": 162},
+    {
+        "id": "N001NB",
+        "type": "B737-800",
+        "base_airport_id": "KDEN",
+        "seats": 162,
+        "min_turn_minutes": 45,
+    },
+    {
+        "id": "N002NB",
+        "type": "B737-800",
+        "base_airport_id": "KDEN",
+        "seats": 162,
+        "min_turn_minutes": 45,
+    },
+    {
+        "id": "N003NB",
+        "type": "B737-800",
+        "base_airport_id": "KATL",
+        "seats": 162,
+        "min_turn_minutes": 45,
+    },
 ]
 
 PREDICTIONS = {

@@ -64,6 +64,7 @@ async def replay_scenario(
     schedule: list[dict] | None = None,
     aircraft: list[dict] | None = None,
     crews: list[dict] | None = None,
+    crew_members: list[dict] | None = None,
 ) -> list[dict]:
     """Re-run a saved scenario from its seed. Returns the final recovery
     plans (list of plan dicts) after the last event in its timeline."""
@@ -76,15 +77,23 @@ async def replay_scenario(
         schedule = cache.get_flights()
         aircraft = cache.get_aircraft()
         crews = cache.get_crew_pairings()
+        if crew_members is None:
+            crew_members = cache.get_crew_members()
 
-    engine = SimulationEngine(schedule, aircraft, crews)
+    engine = SimulationEngine(schedule, aircraft, crews, crew_members=crew_members)
     predictor = CascadePredictor()
     optimizer = RecoveryOptimizer(deterministic=True, timeout_secs=10)
     # Same duck-typed interface as WeatherClient for the one method the engine calls.
-    weather = cast("WeatherClient", _FrozenWeatherClient(repo.load_metars(scenario_id)))
-
-    for event in record.events:
-        await engine.trigger_event(event, predictor, optimizer, weather)
+    snapshots = repo.load_metars(scenario_id)
+    for index, event in enumerate(record.events):
+        weather = cast(
+            "WeatherClient",
+            _FrozenWeatherClient([snapshots[index] if index < len(snapshots) else {}]),
+        )
+        if event.get("operation") == "cancel":
+            await engine.cancel_event(event["event_id"], predictor, optimizer, weather)
+        else:
+            await engine.trigger_event(event, predictor, optimizer, weather)
 
     return engine.state.recovery_plans
 

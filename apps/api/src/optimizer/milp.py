@@ -22,37 +22,26 @@ from datetime import datetime, timedelta
 
 from ortools.sat.python import cp_model
 
-from src.costs.calculator import AirlineDelayCalculator
+from src.costs.calculator import AIRCRAFT_REPOSITION_COST_USD as AIRCRAFT_REPOSITION_COST
+from src.costs.calculator import AirlineDelayCalculator, economic_event_kind
 from src.costs.carbon import (
     EU_ETS_USD_PER_TONNE,
-    FERRY_STAGE_HOURS,
-    block_burn_kg_for,
-    carbon_for_cancellation,
     carbon_for_delay,
+    carbon_for_ferry,
     portfolio_carbon,
 )
-from src.crew.far117 import CrewLegalityEngine
-
-
-def block_burn_kg_for_default() -> float:
-    """Average ferry burn for a generic narrowbody — used by the CP-SAT
-    objective term that prices ferries in dollars before solve."""
-    return block_burn_kg_for("UNKN", FERRY_STAGE_HOURS)
-
+from src.optimizer.feasibility import aircraft_available, validate_decision_locks
 
 logger = logging.getLogger(__name__)
 
-AIRCRAFT_REPOSITION_COST = 8_000  # ferry flight, USD
 MAX_DELAY_MINUTES = 480  # solver upper bound for delay variable
 SPARE_POOL_CAP = 20  # cap spare aircraft considered (solver speed)
 
 # Plan D (Green) only. The per-seat carbon+service price of stranding the
 # passengers on a cancelled leg. Cancelling defers demand rather than erasing
 # it (those pax rebook and the block burn is re-incurred later), so a cancel
-# earns NO block-burn credit — it only avoids the delay-hold burn, paid for by
-# this stranding penalty. Tuned so Green cancels a leg only once its hold-burn
-# clearly exceeds the cost of re-accommodating its passengers (≈ delays beyond
-# ~2.5–3 h on a full narrowbody), instead of degenerating into "cancel all".
+# earns NO block-burn credit in the objective. This configurable modeling
+# penalty is not a statutory compensation amount or a measured passenger cost.
 GREEN_CANCEL_USD_PER_PAX = 11
 
 PLAN_WEIGHTS = {
@@ -71,8 +60,8 @@ PLAN_WEIGHTS = {
         "gamma": 2.0,
         "delta": 10.0,
     },
-    # Plan D — Green Recovery (Slice 4). Optimises the EU-ETS-priced CO₂
-    # ledger: cancellations earn a credit, delays and ferries are billed.
+    # Plan D trades modeled delay/ferry CO2 against service disruption. Its
+    # objective differs from the reported net-emissions accounting ledger.
     "D": {"label": "Green Recovery", "alpha": 1.0, "beta": 2.0, "gamma": 4.0, "delta": 1.0},
 }
 
@@ -105,6 +94,7 @@ class RecoveryPlan:
     # see src/optimizer/uncertain.py for the shape.
     uncertainty: dict | None = None
     summary: str = ""
+    validation: dict = field(default_factory=dict)
 
     def to_dict(self) -> dict:
         from dataclasses import asdict
@@ -132,10 +122,10 @@ class RecoveryOptimizer:
         timeout_secs: int = 30,
         use_fallback: bool = True,
         deterministic: bool = False,
+        progress=None,
     ):
         self.timeout_secs = timeout_secs
         self.use_fallback = use_fallback
-        self.legality_engine = CrewLegalityEngine()
         self.calc = AirlineDelayCalculator()
         # CP-SAT's parallel portfolio search (num_search_workers > 1) races
         # worker threads against the wall clock — under a time limit that can
@@ -145,6 +135,8 @@ class RecoveryOptimizer:
         # Production keeps num_search_workers=4 for solve speed; this is
         # opt-in only, so /simulator API responses are unchanged.
         self.deterministic = deterministic
+        self.progress = progress
+        self._solve_sequence = 0
 
     # ── Public API ────────────────────────────────────────────────────────────
 
@@ -156,33 +148,87 @@ class RecoveryOptimizer:
         events: list[dict],
         disrupted_flights: list[str],
         cascade_predictions: dict[str, dict],
+        decision_locks: list[dict] | None = None,
+        crew_members: list[dict] | None = None,
     ) -> list[RecoveryPlan]:
         flights_map = {f["id"]: f for f in schedule}
         aircraft_map = {a["id"]: a for a in aircraft}
-
-        direct_disrupted_ac: set[str] = {
-            flights_map[fid]["aircraft_id"]
-            for fid in disrupted_flights
-            if fid in flights_map and cascade_predictions.get(fid, {}).get("cascade_order", -1) == 0
+        locks = {
+            r["flight_id"]: r for r in validate_decision_locks(decision_locks, schedule, aircraft)
         }
-        spare_pool = [ac_id for ac_id in aircraft_map if ac_id not in direct_disrupted_ac]
+        predictions = {fid: dict(row) for fid, row in cascade_predictions.items()}
+        disrupted_flights = list(dict.fromkeys([*disrupted_flights, *locks]))
+        for fid, lock in locks.items():
+            row = predictions.setdefault(fid, {})
+            row["cascade_order"] = max(0, row.get("cascade_order", -1))
+            row["expected_delay_min"] = max(
+                row.get("expected_delay_min", 0), lock.get("delay_minutes", 0)
+            )
+
+        # An earlier disrupted rotation does not make a tail unavailable all
+        # day. Check its actual windows; prioritize explicit dispatcher locks.
+        locked_tails = list(
+            dict.fromkeys(r["aircraft_id"] for r in locks.values() if "aircraft_id" in r)
+        )
+        spare_pool = list(dict.fromkeys([*locked_tails, *aircraft_map]))
+        crew_failures = set()
+        if crew_members is not None:
+            from src.services.crew_audit import assess_plan_crew
+
+            roster_schedule = [
+                {**f, "aircraft_type": aircraft_map.get(f.get("aircraft_id"), {}).get("type")}
+                for f in schedule
+            ]
+            assessments = assess_plan_crew(
+                roster_schedule,
+                crews,
+                crew_members,
+                {fid: row.get("expected_delay_min", 0) for fid, row in predictions.items()},
+                {fid for fid, lock in locks.items() if lock.get("cancel")},
+            )
+            crew_failures = {fid for fid, result in assessments.items() if result.status == "fail"}
 
         plans: list[RecoveryPlan] = []
         for plan_id, weights in PLAN_WEIGHTS.items():
             t0 = time.monotonic()
+            self._solve_sequence += 1
+            if self.progress:
+                self.progress(
+                    {
+                        "type": "plan_started",
+                        "plan_id": plan_id,
+                        "solve_sequence": self._solve_sequence,
+                    }
+                )
             plan = self._solve_plan(
                 plan_id=plan_id,
                 weights=weights,
                 flights_map=flights_map,
                 aircraft_map=aircraft_map,
-                spare_pool=spare_pool[:SPARE_POOL_CAP],
+                spare_pool=spare_pool[: max(SPARE_POOL_CAP, len(locked_tails))],
                 disrupted=disrupted_flights,
-                predictions=cascade_predictions,
+                predictions=predictions,
                 crews=crews,
                 events=events,
+                locks=locks,
+                crew_failures=crew_failures,
+            )
+            plan = self.validate_plan(
+                plan, schedule, aircraft, crews, events, predictions, locks, crew_members
             )
             plan.solve_time_ms = max(1, int((time.monotonic() - t0) * 1000))
             plans.append(plan)
+            if self.progress:
+                self.progress(
+                    {
+                        "type": "plan_completed",
+                        "plan_id": plan_id,
+                        "solve_sequence": self._solve_sequence,
+                        "status": plan.status,
+                        "solve_time_ms": plan.solve_time_ms,
+                        "cost_usd": plan.total_cost_usd,
+                    }
+                )
             logger.info(
                 "Plan %s (%s) [%s]: %d cancelled, %d delayed, $%.0f — %dms",
                 plan_id,
@@ -194,6 +240,113 @@ class RecoveryOptimizer:
                 plan.solve_time_ms,
             )
         return plans
+
+    def validate_plan(
+        self, plan, schedule, aircraft, crews, events, predictions, locks=None, crew_members=None
+    ):
+        """Shared postcondition for CP-SAT, heuristic, and uncertainty rebuilds.
+
+        Validation covers this bounded simulation model, not operational approval.
+        Unknown roster data is preserved as unknown rather than invented as legal.
+        """
+        locks = locks or {}
+        flights = {f["id"]: f for f in schedule}
+        fleet = {a["id"]: a for a in aircraft}
+        cancelled = set(plan.cancelled_flights)
+        delays = {d["flight_id"]: d["delay_minutes"] for d in plan.delayed_flights}
+        assignments = {s["flight_id"]: s["new_aircraft"] for s in plan.aircraft_swaps}
+        effective = {fid: {"expected_delay_min": delays.get(fid, 0)} for fid in flights}
+        grounded = self._extract_grounded_tails(events)
+        issues = []
+        if plan.status != "infeasible":
+            if len(assignments) != len(plan.aircraft_swaps):
+                issues.append("A flight was assigned multiple aircraft")
+            if len(set(assignments.values())) != len(assignments):
+                issues.append("A spare aircraft was assigned more than once")
+            for fid, tail in assignments.items():
+                if fid not in flights or not aircraft_available(
+                    flights[fid], tail, flights, fleet, effective, grounded
+                ):
+                    issues.append(f"{fid}: assigned aircraft is unavailable or incompatible")
+            for fid, lock in locks.items():
+                if lock.get("cancel", False) != (fid in cancelled):
+                    issues.append(f"{fid}: cancellation lock was not honored")
+                if fid in cancelled:
+                    continue
+                if delays.get(fid, 0) < lock.get("delay_minutes", 0):
+                    issues.append(f"{fid}: delay floor was not honored")
+                if "aircraft_id" in lock:
+                    tail = assignments.get(fid, flights[fid].get("aircraft_id"))
+                    if tail != lock["aircraft_id"] or not aircraft_available(
+                        flights[fid], tail, flights, fleet, effective, grounded
+                    ):
+                        issues.append(f"{fid}: aircraft lock is infeasible")
+            for fid, flight in flights.items():
+                if (
+                    fid not in cancelled
+                    and flight.get("aircraft_id") in grounded
+                    and fid not in assignments
+                ):
+                    issues.append(f"{fid}: grounded aircraft has no replacement")
+            # Validate the resulting rotations, including legs stranded by a
+            # cancellation or reassignment. No implicit ferry is invented.
+            changed = cancelled | set(delays) | set(assignments) | set(locks)
+            affected_tails = {flights[fid].get("aircraft_id") for fid in changed if fid in flights}
+            affected_tails.update(assignments.values())
+            resulting = {
+                fid: {**f, "aircraft_id": assignments.get(fid, f.get("aircraft_id"))}
+                for fid, f in flights.items()
+                if fid not in cancelled
+            }
+            for fid, flight in resulting.items():
+                tail = flight.get("aircraft_id")
+                if tail in affected_tails and not aircraft_available(
+                    flight, tail, resulting, fleet, effective, grounded
+                ):
+                    issues.append(f"{fid}: resulting aircraft rotation is infeasible")
+
+        crew = {
+            "status": "unknown",
+            "violations": 0,
+            "unknown_flights": len(flights) - len(cancelled),
+            "note": "Crew roster not supplied; no claim of crew legality",
+        }
+        if crew_members is not None:
+            from src.services.crew_audit import assess_plan_crew
+
+            roster_schedule = [
+                {
+                    **f,
+                    "aircraft_type": fleet.get(
+                        assignments.get(f["id"], f.get("aircraft_id")), {}
+                    ).get("type"),
+                }
+                for f in schedule
+            ]
+            results = assess_plan_crew(roster_schedule, crews, crew_members, delays, cancelled)
+            failures = [fid for fid, result in results.items() if result.status == "fail"]
+            unknown = [fid for fid, result in results.items() if result.status == "unknown"]
+            crew = {
+                "status": "fail" if failures else "unknown" if unknown else "pass",
+                "violations": sum(len(result.violations) for result in results.values()),
+                "unknown_flights": len(unknown),
+                "failed_flights": failures,
+                "checked_flights": len(results),
+            }
+            issues.extend(f"{fid}: supported crew checks failed" for fid in failures)
+        plan.crew_violations = crew["violations"]
+        validation = {
+            "status": "fail" if issues or plan.status == "infeasible" else crew["status"],
+            "scope": "Conservative aircraft assignments and supported crew checks; simulation only",
+            "issues": issues,
+            "crew": crew,
+        }
+        if issues:
+            rejected = self._infeasible_plan(plan.plan_id)
+            rejected.crew_violations = plan.crew_violations
+            plan = rejected
+        plan.validation = validation
+        return plan
 
     # ── CP-SAT model ──────────────────────────────────────────────────────────
 
@@ -208,7 +361,11 @@ class RecoveryOptimizer:
         predictions: dict[str, dict],
         crews: list[dict],
         events: list[dict],
+        locks: dict[str, dict] | None = None,
+        crew_failures: set[str] | None = None,
     ) -> RecoveryPlan:
+        locks = locks or {}
+        crew_failures = crew_failures or set()
         grounded_tails = self._extract_grounded_tails(events)
         event_kind = self._extract_event_kind(events)
 
@@ -223,7 +380,13 @@ class RecoveryOptimizer:
 
         # Identify flights whose original aircraft is grounded (AOG)
         aog_flights = [
-            fid for fid in active if flights_map[fid].get("aircraft_id", "") in grounded_tails
+            fid
+            for fid in active
+            if flights_map[fid].get("aircraft_id", "") in grounded_tails
+            or (
+                locks.get(fid, {}).get("aircraft_id")
+                not in (None, flights_map[fid].get("aircraft_id"))
+            )
         ]
 
         # Pre-compute cost coefficients (integers — CP-SAT requires integer objective)
@@ -263,11 +426,22 @@ class RecoveryOptimizer:
 
         # Decision vars
         cancel: dict[str, cp_model.IntVar] = {fid: model.new_bool_var(f"x_{fid}") for fid in active}
+        for fid in crew_failures.intersection(active):
+            model.add(cancel[fid] == 1)
+        for fid, lock in locks.items():
+            if "cancel" in lock or "aircraft_id" in lock or "delay_minutes" in lock:
+                model.add(cancel[fid] == int(lock.get("cancel", False)))
 
         # Aircraft swap vars: only for AOG flights that have a grounded original
         swap: dict[str, dict[str, cp_model.IntVar]] = {}
         for fid in aog_flights:
-            swap[fid] = {spare: model.new_bool_var(f"s_{fid}_{spare}") for spare in spare_pool}
+            swap[fid] = {
+                spare: model.new_bool_var(f"s_{fid}_{spare}")
+                for spare in spare_pool
+                if aircraft_available(
+                    flights_map[fid], spare, flights_map, aircraft_map, predictions, grounded_tails
+                )
+            }
             spare_vars = list(swap[fid].values())
             if spare_vars:
                 # At most one spare per flight
@@ -285,6 +459,15 @@ class RecoveryOptimizer:
             uses = [swap[fid][spare] for fid in aog_flights if spare in swap.get(fid, {})]
             if len(uses) > 1:
                 model.add_at_most_one(uses)
+        for fid, lock in locks.items():
+            tail = lock.get("aircraft_id")
+            if tail is None:
+                continue
+            if tail == flights_map[fid].get("aircraft_id") and tail not in grounded_tails:
+                continue
+            if tail not in swap.get(fid, {}):
+                return self._infeasible_plan(plan_id, weights)
+            model.add(swap[fid][tail] == 1)
 
         # ── Objective ─────────────────────────────────────────────────────────
         obj: list = []
@@ -363,18 +546,55 @@ class RecoveryOptimizer:
             for fid, spares in swap.items():
                 for sv in spares.values():
                     # Ferry burn priced at EU ETS — pure overhead carbon.
-                    ferry_usd_int = int(
-                        (block_burn_kg_for_default() * 3.16 / 1000.0) * EU_ETS_USD_PER_TONNE
-                    )
+                    ferry_usd_int = int((carbon_for_ferry().co2_kg / 1000.0) * EU_ETS_USD_PER_TONNE)
                     obj.append(ferry_usd_int * sv)
 
         model.minimize(sum(obj))
 
         # ── Solve ─────────────────────────────────────────────────────────────
-        status_code = solver.solve(model)
+        callback = None
+        if self.progress:
+            emit, sequence = self.progress, self._solve_sequence
+            constraints = len(model.proto.constraints)
+            emit(
+                {
+                    "type": "model_ready",
+                    "plan_id": plan_id,
+                    "solve_sequence": sequence,
+                    "constraint_count": constraints,
+                }
+            )
+
+            class Progress(cp_model.CpSolverSolutionCallback):
+                def __init__(self):
+                    super().__init__()
+                    self.count = 0
+
+                def on_solution_callback(self):
+                    self.count += 1
+                    emit(
+                        {
+                            "type": "incumbent",
+                            "plan_id": plan_id,
+                            "solve_sequence": sequence,
+                            "incumbent_count": self.count,
+                            "objective_value": self.objective_value,
+                            "best_objective_bound": self.best_objective_bound,
+                            "constraints_satisfied": constraints,
+                            "solver_elapsed_seconds": self.wall_time,
+                        }
+                    )
+
+            callback = Progress()
+        status_code = solver.solve(model, callback)
         solved = status_code in (cp_model.OPTIMAL, cp_model.FEASIBLE)
 
         if not solved:
+            if not self.use_fallback or status_code in (
+                cp_model.INFEASIBLE,
+                cp_model.MODEL_INVALID,
+            ):
+                return self._infeasible_plan(plan_id, weights)
             logger.warning(
                 "Plan %s CP-SAT failed (%s) — using heuristic fallback",
                 plan_id,
@@ -392,6 +612,8 @@ class RecoveryOptimizer:
                 events,
                 grounded_tails,
                 event_kind,
+                locks,
+                crew_failures,
             )
 
         cp_status = "optimal" if status_code == cp_model.OPTIMAL else "feasible"
@@ -472,7 +694,11 @@ class RecoveryOptimizer:
         events: list,
         grounded_tails: set,
         event_kind: str,
+        locks: dict[str, dict] | None = None,
+        crew_failures: set[str] | None = None,
     ) -> RecoveryPlan:
+        locks = locks or {}
+        crew_failures = crew_failures or set()
         cancelled: list[str] = []
         delayed: list[dict] = []
         swaps: list[dict] = []
@@ -483,7 +709,7 @@ class RecoveryOptimizer:
             for fid in flights_map
         }
 
-        for fid in active:
+        for fid in sorted(active, key=lambda fid: "aircraft_id" not in locks.get(fid, {})):
             flight = flights_map[fid]
             pred = predictions.get(fid, {})
             expected_delay = max(0, int(pred.get("expected_delay_min", 60)))
@@ -492,9 +718,31 @@ class RecoveryOptimizer:
             ac_type = ac_type_map.get(fid, "")
             original_ac = flight.get("aircraft_id", "")
 
-            should_cancel = self._decide_cancel(
-                plan_id, flight, expected_delay, p_delayed, cascade_order, event_kind, ac_type
+            eligible_spares = [
+                spare
+                for spare in spare_q
+                if aircraft_available(
+                    flight, spare, flights_map, aircraft_map, predictions, grounded_tails
+                )
+            ]
+            lock = locks.get(fid, {})
+            requested_tail = lock.get("aircraft_id")
+            needs_swap = original_ac in grounded_tails or requested_tail not in (None, original_ac)
+            if requested_tail and needs_swap:
+                eligible_spares = [tail for tail in eligible_spares if tail == requested_tail]
+            should_cancel = (
+                fid in crew_failures
+                or (original_ac in grounded_tails and not eligible_spares)
+                or self._decide_cancel(
+                    plan_id, flight, expected_delay, p_delayed, cascade_order, event_kind, ac_type
+                )
             )
+            if lock:
+                should_cancel = lock.get("cancel", False)
+                if not should_cancel and (
+                    fid in crew_failures or (needs_swap and not eligible_spares)
+                ):
+                    return self._infeasible_plan(plan_id, weights)
 
             if should_cancel:
                 cancelled.append(fid)
@@ -514,8 +762,9 @@ class RecoveryOptimizer:
                             "original_departure": dep_str,
                         }
                     )
-                if original_ac in grounded_tails and spare_q:
-                    spare = spare_q.pop(0)
+                if needs_swap and eligible_spares:
+                    spare = eligible_spares[0]
+                    spare_q.remove(spare)
                     swaps.append(
                         {
                             "flight_id": fid,
@@ -525,15 +774,30 @@ class RecoveryOptimizer:
                         }
                     )
 
-        if plan_id == "C":
+        if plan_id == "C" and not locks:
             cancelled_ac = {
                 flights_map[fid]["aircraft_id"] for fid in cancelled if fid in flights_map
             }
             for info in delayed:
                 fid = info["flight_id"]
+                if any(swap["flight_id"] == fid for swap in swaps):
+                    continue
                 orig_ac = flights_map.get(fid, {}).get("aircraft_id", "")
-                if orig_ac in cancelled_ac and spare_q:
-                    spare = spare_q.pop(0)
+                eligible = [
+                    spare
+                    for spare in spare_q
+                    if aircraft_available(
+                        flights_map[fid],
+                        spare,
+                        flights_map,
+                        aircraft_map,
+                        predictions,
+                        grounded_tails,
+                    )
+                ]
+                if orig_ac in cancelled_ac and eligible:
+                    spare = eligible[0]
+                    spare_q.remove(spare)
                     swaps.append(
                         {
                             "flight_id": fid,
@@ -583,13 +847,9 @@ class RecoveryOptimizer:
                 return True
             return False
         elif plan_id == "D":
-            # Plan D heuristic — cancel when avoided block-burn outweighs
-            # the burn we'd incur by holding the flight late.
-            if expected_delay < 90:
-                return False
             delay_co2 = carbon_for_delay(flight, expected_delay, aircraft_type).co2_kg
-            saved_co2 = abs(carbon_for_cancellation(flight, aircraft_type).co2_kg)
-            return delay_co2 > saved_co2 * 0.7
+            hold_cost = int(delay_co2 / 1000.0 * EU_ETS_USD_PER_TONNE)
+            return hold_cost > max(1, flight.get("passengers", 150)) * GREEN_CANCEL_USD_PER_PAX
         return expected_delay > 180
 
     # ── Shared plan builder ───────────────────────────────────────────────────
@@ -642,8 +902,6 @@ class RecoveryOptimizer:
             f"{len(swaps)} swaps · {carbon.total_co2_kg / 1000:+.1f} tCO₂e"
         )
 
-        crew_violations = self._count_far117_violations(crews, flights_map, cancelled, delayed)
-
         return RecoveryPlan(
             plan_id=plan_id,
             objective_label=weights["label"],
@@ -655,7 +913,7 @@ class RecoveryOptimizer:
             crew_reassignments=[],
             total_cost_usd=round(total_cost, 2),
             total_passenger_delay_minutes=cost_data.get("total_pax_delay_minutes", 0),
-            crew_violations=crew_violations,
+            crew_violations=0,  # validate_plan uses the actual supplied roster.
             aircraft_out_of_position=len(swaps),
             cost_breakdown=cost_breakdown,
             total_co2_kg=carbon.total_co2_kg,
@@ -676,77 +934,7 @@ class RecoveryOptimizer:
         return grounded
 
     def _extract_event_kind(self, events: list[dict]) -> str:
-        for ev in events:
-            kind = ev.get("kind") or ev.get("event_type") or ev.get("type", "")
-            if kind and kind != "aircraft_grounded":
-                return kind
-        return ""
-
-    def _count_far117_violations(
-        self,
-        crews: list[dict],
-        flights: dict[str, dict],
-        cancelled: list[str],
-        delayed: list[dict],
-    ) -> int:
-        if not crews:
-            return 0
-
-        pairing_by_flight = {p["flight_id"]: p for p in crews if p.get("flight_id")}
-        delays_by_flight = {d["flight_id"]: d["delay_minutes"] for d in delayed}
-        violations = 0
-
-        for fid, flight in flights.items():
-            if fid in cancelled:
-                continue
-            pairing = pairing_by_flight.get(fid)
-            if not pairing:
-                continue
-            delay_min = delays_by_flight.get(fid, 0)
-            try:
-                dep = datetime.fromisoformat(
-                    flight["scheduled_departure"].replace("Z", "+00:00")
-                ) + timedelta(minutes=delay_min)
-                arr = datetime.fromisoformat(
-                    flight["scheduled_arrival"].replace("Z", "+00:00")
-                ) + timedelta(minutes=delay_min)
-            except (KeyError, ValueError, AttributeError):
-                continue
-
-            duty_start = pairing.get("duty_start")
-            try:
-                duty_start_dt = (
-                    datetime.fromisoformat(str(duty_start).replace("Z", "+00:00"))
-                    if duty_start
-                    else dep
-                )
-            except (ValueError, AttributeError):
-                duty_start_dt = dep
-
-            crew_snapshot = {
-                "id": pairing.get("captain_id", "?"),
-                "role": "captain",
-                "current_fdp_start": duty_start_dt,
-                "current_fdp_flight_minutes": 0,
-                "last_rest_end": duty_start_dt - timedelta(hours=11),
-                "flight_time_7d_minutes": 0,
-                "flight_time_28d_minutes": 0,
-                "flight_time_365d_minutes": 0,
-                "home_timezone_offset_hours": 0,
-            }
-            proposed = {
-                "departure": dep,
-                "arrival": arr,
-                "flight_time_minutes": int((arr - dep).total_seconds() / 60),
-            }
-            try:
-                result = self.legality_engine.validate(crew_snapshot, proposed)
-                if not result.is_legal:
-                    violations += len(result.violations)
-            except Exception as exc:
-                logger.debug("FAR 117 check failed for %s: %s", fid, exc)
-
-        return violations
+        return economic_event_kind(events)
 
     def _empty_plan(self, plan_id: str, weights: dict) -> RecoveryPlan:
         return RecoveryPlan(

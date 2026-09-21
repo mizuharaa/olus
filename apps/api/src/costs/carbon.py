@@ -3,7 +3,8 @@ Carbon accounting for airline disruption recovery.
 
 This module is the foundation for **Plan D — Green Recovery**, the carbon-aware
 fourth strategy added in the Slice 4 revamp. It converts every operational
-decision into kilograms of CO₂-equivalent and prices that carbon under EU ETS.
+decision into modeled combustion CO₂ and applies a fixed scenario carbon price.
+This is neither a live emissions inventory nor an EU ETS liability calculation.
 
 Sources (all public):
   - ICAO Carbon Emissions Calculator Methodology v13 (2024) — fuel-to-CO₂ factor
@@ -20,9 +21,11 @@ decisions, not to publish a defensible Tier-2 emissions inventory.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
+from datetime import datetime
 
-from src.data.airlines import get_aircraft_info
+from src.data.airlines import get_aircraft_info, resolve_aircraft_type
 
 # ── Core constants ────────────────────────────────────────────────────────────
 
@@ -55,17 +58,16 @@ AVG_STAGE_HOURS = 2.0
 # carries no passengers — every kilogram is pure overhead.
 FERRY_STAGE_HOURS = 1.6
 
-# EU ETS market price for one tonne of CO₂. We hold this as a parameter so
-# the UI can sweep it (ICE EUA futures, July 2024 ≈ €85 = ~$93).
+# Fixed scenario assumption, not a live market quote or jurisdictional tax rule.
 EU_ETS_USD_PER_TONNE = 95.0
 
 
 # ── Per-event multipliers ─────────────────────────────────────────────────────
-# A delayed flight burns fuel both on the ground (APU) and in the air
-# (longer holds, slower climb). We split it 65 % air, 35 % APU.
+# Departure delays default to ground/APU. A scenario may explicitly provide
+# delay_air_fraction when modeling an airborne hold; it is not observed telemetry.
 
-DELAY_AIR_FRACTION = 0.65
-DELAY_APU_FRACTION = 0.35
+DELAY_AIR_FRACTION = 0.0
+DELAY_APU_FRACTION = 1.0
 
 
 @dataclass
@@ -90,6 +92,14 @@ class PortfolioCarbon:
 
     def to_dict(self) -> dict:
         return {
+            "model_version": "scenario-carbon-2026-09-20",
+            "estimate_only": True,
+            "comparison_basis": "scheduled_operations",
+            "carbon_price_source": "fixed_scenario_assumption",
+            "carbon_charge_rule": "max(0, net_co2_delta_kg) / 1000 * scenario_price",
+            "negative_delta_credit": False,
+            "net_co2_delta_kg": round(self.total_co2_kg, 1),
+            "net_fuel_delta_kg": round(self.total_fuel_kg, 1),
             "total_co2_kg": round(self.total_co2_kg, 1),
             "total_co2_tonnes": round(self.total_co2_kg / 1000, 3),
             "total_fuel_kg": round(self.total_fuel_kg, 1),
@@ -107,6 +117,8 @@ class PortfolioCarbon:
                 for ci in self.per_flight[:25]  # truncate for API
             ],
             "ets_price_usd_per_tonne": EU_ETS_USD_PER_TONNE,
+            "per_flight_count": len(self.per_flight),
+            "per_flight_omitted": max(0, len(self.per_flight) - 25),
         }
 
 
@@ -142,9 +154,14 @@ def carbon_for_delay(
 ) -> CarbonInfo:
     """Extra CO₂ produced by holding a flight for `delay_minutes`."""
     ac_type = aircraft_type or flight.get("aircraft_type", "") or "UNKN"
-    h = max(0, delay_minutes) / 60.0
-    air_kg = block_burn_kg_for(ac_type, h * DELAY_AIR_FRACTION)
-    apu_kg = apu_burn_kg_for(ac_type, h * DELAY_APU_FRACTION)
+    if not math.isfinite(delay_minutes) or delay_minutes < 0:
+        raise ValueError("delay_minutes must be finite and nonnegative")
+    air_fraction = float(flight.get("delay_air_fraction", DELAY_AIR_FRACTION))
+    if not math.isfinite(air_fraction) or not 0 <= air_fraction <= 1:
+        raise ValueError("delay_air_fraction must be between zero and one")
+    h = delay_minutes / 60.0
+    air_kg = block_burn_kg_for(ac_type, h * air_fraction)
+    apu_kg = apu_burn_kg_for(ac_type, h * (1 - air_fraction))
     total_fuel = air_kg + apu_kg
     total_co2 = fuel_to_co2(total_fuel)
     return CarbonInfo(
@@ -152,9 +169,14 @@ def carbon_for_delay(
         co2_kg=total_co2,
         fuel_kg=total_fuel,
         breakdown={
+            "aircraft_model": resolve_aircraft_type(ac_type),
             "air_burn_kg": round(air_kg, 1),
             "apu_burn_kg": round(apu_kg, 1),
             "delay_min": delay_minutes,
+            "air_fraction": air_fraction,
+            "phase_source": "scenario_assumption"
+            if "delay_air_fraction" in flight
+            else "ground_delay_default",
         },
         note=f"+{delay_minutes}m delay",
     )
@@ -166,14 +188,33 @@ def carbon_for_cancellation(
 ) -> CarbonInfo:
     """Cancelling a revenue leg removes the full block-hour burn (negative ledger)."""
     ac_type = aircraft_type or flight.get("aircraft_type", "") or "UNKN"
-    fuel = block_burn_kg_for(ac_type, AVG_STAGE_HOURS)
+    hours = AVG_STAGE_HOURS
+    duration_source = "assumed_stage_duration"
+    departure = flight.get("scheduled_departure")
+    arrival = flight.get("scheduled_arrival")
+    if departure and arrival:
+        try:
+            start = datetime.fromisoformat(departure.replace("Z", "+00:00"))
+            end = datetime.fromisoformat(arrival.replace("Z", "+00:00"))
+            if start.tzinfo is None or end.tzinfo is None:
+                raise ValueError("Scheduled times require time zones")
+            scheduled_hours = (end - start).total_seconds() / 3600
+            if scheduled_hours <= 0:
+                raise ValueError("Arrival must follow departure")
+            hours = scheduled_hours
+            duration_source = "scheduled_block_time"
+        except (ValueError, TypeError, AttributeError):
+            duration_source = "invalid_schedule_assumed_stage_duration"
+    fuel = block_burn_kg_for(ac_type, hours)
     co2 = fuel_to_co2(fuel)
     return CarbonInfo(
         flight_id=flight.get("id", ""),
         co2_kg=-co2,
         fuel_kg=-fuel,
         breakdown={
-            "stage_hr": AVG_STAGE_HOURS,
+            "aircraft_model": resolve_aircraft_type(ac_type),
+            "stage_hr": hours,
+            "duration_source": duration_source,
             "block_burn_kg": round(fuel, 1),
         },
         note="cancelled — burn avoided",
@@ -192,6 +233,7 @@ def carbon_for_ferry(
         co2_kg=co2,
         fuel_kg=fuel,
         breakdown={
+            "aircraft_model": resolve_aircraft_type(aircraft_type),
             "stage_hr": hours,
             "burn_kg": round(fuel, 1),
             "passengers": 0,
@@ -253,7 +295,7 @@ def portfolio_carbon(
     return PortfolioCarbon(
         total_co2_kg=net_co2,
         total_fuel_kg=total_fuel,
-        eu_ets_cost_usd=max(0.0, eu_ets_cost),  # ETS bills for net positive only
+        eu_ets_cost_usd=max(0.0, eu_ets_cost),  # scenario charge; no credit for negative deltas
         saved_co2_kg=saved_co2,
         burned_co2_kg=burned_co2,
         per_flight=per_flight,

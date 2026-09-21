@@ -172,17 +172,21 @@ class TestHeuristicFallback:
     """Integration checks for the heuristic planner (replaces removed _greedy_fallback API)."""
 
     def test_fallback_produces_plan(self, optimizer):
+        # Preserve a feasible rotation after NB101's 90-minute shift. The
+        # previous fixture left only 30 minutes against a 45-minute turn.
+        predictions = {fid: dict(row) for fid, row in PREDICTIONS.items()}
+        predictions["NB102"]["expected_delay_min"] = 90
         plans = optimizer.solve(
             schedule=FLIGHTS,
             aircraft=AIRCRAFT,
             crews=CREWS,
             events=[],
-            disrupted_flights=["NB101"],
-            cascade_predictions=PREDICTIONS,
+            disrupted_flights=["NB101", "NB102"],
+            cascade_predictions=predictions,
         )
         plan_a = next(p for p in plans if p.plan_id == "A")
         # CP-SAT may finish within budget on CI hardware (status "optimal");
-        # use_fallback=True still guarantees a valid plan when it does not.
+        # This coherent input also permits a feasible heuristic result.
         assert plan_a.status in {"heuristic", "optimal", "feasible"}
         assert plan_a.plan_id == "A"
 
@@ -193,7 +197,9 @@ class TestHeuristicFallback:
             "NB103": {"p_delayed": 0.3, "expected_delay_min": 20, "cascade_order": 2},
         }
         plans = optimizer.solve(
-            schedule=FLIGHTS,
+            # Isolate the cancellation threshold: cancelling NB101 in the
+            # full fixture would strand its next rotation at KATL.
+            schedule=[FLIGHTS[0]],
             aircraft=AIRCRAFT,
             crews=CREWS,
             events=[],

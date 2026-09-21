@@ -1,10 +1,10 @@
 """Recovery optimizer endpoints."""
 
-import datetime
-
 from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
+from src.costs.calculator import economic_event_kind
+from src.events.catalog import constraint_kind_for
 from src.network import cache
 from src.optimizer.crew_overbooking import CrewOverbookingOptimizer
 from src.optimizer.explain import explain_plan
@@ -43,8 +43,8 @@ def _load_network(engine=None):
         return (
             list(engine.schedule.values()),
             list(engine.aircraft.values()),
-            cache.get_crew_pairings(),
-            cache.get_crew_members(),
+            list(engine.crews.values()),
+            engine.crew_members or [],
         )
     return (
         cache.get_flights(),
@@ -56,81 +56,30 @@ def _load_network(engine=None):
 
 @router.post("/recovery/solve")
 async def solve_recovery(payload: SolveRequest, request: Request):
-    """Run the recovery optimizer and return 3 plans."""
+    """Re-solve all active constraints; selecting a subset must never drop a safety constraint."""
     optimizer = request.app.state.optimizer
     predictor = request.app.state.predictor
     weather = request.app.state.weather
     engine = request.app.state.engine
 
-    if not optimizer:
+    if not all((optimizer, predictor, weather, engine)):
         raise HTTPException(status_code=503, detail="Optimizer not initialized")
-
-    # Get schedule + active constraints
-    flights, aircraft, crews, _ = _load_network(engine)
-    active_events = engine.state.active_events if engine else []
-    constraints = []
-    for ev in active_events:
-        kind = ev.get("kind", "")
-        params = ev.get("params", {})
-        if kind in ("weather_closure", "ground_stop", "security_event"):
-            constraints.append(
-                {
-                    "type": "airport_unavailable",
-                    "airport": params.get("airport", ""),
-                    "start": "",
-                    "end": "",
-                }
-            )
-        elif kind == "mechanical_aog":
-            constraints.append(
-                {"type": "aircraft_grounded", "aircraft_tail": params.get("aircraft_tail", "")}
-            )
-
-    # Get cascade predictions
-    disrupted = payload.disrupted_flight_ids or (
-        list(engine.state.flight_states.keys()) if engine else []
-    )
-    metar_data = weather.get_all_cached() if weather else {}
-    event = active_events[0] if active_events else {}
-    predictions = (
-        predictor.predict(flights, event, metar_data, datetime.datetime.now(datetime.timezone.utc))
-        if predictor
-        else {}
-    )
-
-    plans = optimizer.solve(
-        schedule=flights,
-        aircraft=aircraft,
-        crews=crews,
-        events=constraints,
-        disrupted_flights=disrupted,
-        cascade_predictions=predictions,
-    )
-
-    return {
-        "plans": [
-            {
-                "plan_id": p.plan_id,
-                "objective_label": p.objective_label,
-                "status": p.status,
-                "solve_time_ms": p.solve_time_ms,
-                "cancelled_flights": p.cancelled_flights,
-                "delayed_flights": p.delayed_flights,
-                "aircraft_swaps": p.aircraft_swaps,
-                "crew_reassignments": p.crew_reassignments,
-                "total_cost_usd": p.total_cost_usd,
-                "total_passenger_delay_minutes": p.total_passenger_delay_minutes,
-                "crew_violations": p.crew_violations,
-                "aircraft_out_of_position": p.aircraft_out_of_position,
-                "cost_breakdown": p.cost_breakdown,
-                "total_co2_kg": p.total_co2_kg,
-                "eu_ets_cost_usd": p.eu_ets_cost_usd,
-                "carbon_breakdown": p.carbon_breakdown,
-                "summary": p.summary,
-            }
-            for p in plans
-        ]
-    }
+    active_ids = {event["id"] for event in engine.state.active_events}
+    if payload.event_ids and set(payload.event_ids) != active_ids:
+        raise HTTPException(
+            422, "Solve includes all active events; cancel an event before excluding it"
+        )
+    if set(payload.disrupted_flight_ids) - set(engine.schedule):
+        raise HTTPException(422, "Unknown disrupted flight")
+    try:
+        update = await engine.solve_current(
+            predictor, optimizer, weather, payload.disrupted_flight_ids
+        )
+    except ValueError as error:
+        raise HTTPException(422, str(error))
+    except RuntimeError as error:
+        raise HTTPException(409, str(error))
+    return {"plans": update["recovery_plans"], "cascade_summary": update["cascade_summary"]}
 
 
 @router.get("/recovery/plans")
@@ -153,8 +102,6 @@ async def explain_recovery_plan(payload: ExplainRequest, request: Request):
     "Why this plan?" panel on the plan-detail page.
     """
     engine = request.app.state.engine
-    predictor = request.app.state.predictor
-    weather = request.app.state.weather
 
     plans: list[dict] = []
     if engine:
@@ -167,17 +114,9 @@ async def explain_recovery_plan(payload: ExplainRequest, request: Request):
 
     flights, aircraft, _, _ = _load_network(engine)
     active_events = engine.state.active_events if engine else []
-    event_kind = active_events[0].get("kind", "") if active_events else ""
+    event_kind = economic_event_kind(active_events)
 
-    metar_data = weather.get_all_cached() if weather else {}
-    active_ev = active_events[0] if active_events else {}
-    predictions = (
-        predictor.predict(
-            flights, active_ev, metar_data, datetime.datetime.now(datetime.timezone.utc)
-        )
-        if predictor
-        else {}
-    )
+    predictions = engine.state.predictions if engine else {}
 
     return explain_plan(
         plan=plan,
@@ -208,8 +147,12 @@ async def apply_recovery_plan(payload: ApplyRequest, request: Request):
         return await engine.unapply_plan()
     try:
         return await engine.apply_plan(payload.plan_id)
-    except ValueError as e:
+    except KeyError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=422, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=409, detail=str(e))
 
 
 @router.post("/recovery/crew-overbooking")
@@ -222,32 +165,26 @@ async def solve_crew_overbooking(request: Request):
     compensation obligations per uncovered flight.
     """
     engine = getattr(request.app.state, "engine", None)
-    predictor = getattr(request.app.state, "predictor", None)
-    weather = getattr(request.app.state, "weather", None)
 
     flights, aircraft, crews, members = _load_network(engine)
     flights_by_id = {f["id"]: f for f in flights}
 
     active_events: list[dict] = engine.state.active_events if engine else []
     flight_states: dict = engine.state.flight_states if engine else {}
-    event_kind = active_events[0].get("kind", "") if active_events else ""
+    event_kind = economic_event_kind(active_events)
 
     # Cascade predictions
-    metar_data = weather.get_all_cached() if weather else {}
-    active_ev = active_events[0] if active_events else {}
-    predictions = (
-        predictor.predict(
-            flights, active_ev, metar_data, datetime.datetime.now(datetime.timezone.utc)
-        )
-        if predictor
-        else {}
-    )
+    predictions = engine.state.predictions if engine else {}
 
     # Determine which crew are affected
     affected_pct = 0.0
     for ev in active_events:
-        if ev.get("kind") == "crew_sickout":
-            affected_pct = float(ev.get("params", {}).get("percentage", 30)) / 100.0
+        if constraint_kind_for(ev.get("kind", "")) == "crew_sickout":
+            params = ev.get("params", {})
+            affected_pct = max(
+                affected_pct,
+                float(params.get("callout_pct", params.get("percent_affected", 30))) / 100.0,
+            )
 
     all_captain_ids = {m["id"] for m in members if m.get("role") == "captain"}
     affected_count = max(1, int(len(all_captain_ids) * affected_pct)) if affected_pct else 0
@@ -255,7 +192,7 @@ async def solve_crew_overbooking(request: Request):
     # Naive: mark the first N captains as unavailable (in a real system, engine tracks this)
     sorted_caps = sorted(all_captain_ids)
     unavailable_caps = set(sorted_caps[:affected_count])
-    available_caps = all_captain_ids - unavailable_caps
+    available_crew = {member["id"] for member in members} - unavailable_caps
 
     # Identify open flights (disrupted + status not cancelled by engine already)
     open_flights: list[dict] = []
@@ -271,14 +208,14 @@ async def solve_crew_overbooking(request: Request):
         pairing = next((p for p in crews if p.get("flight_id") == fid), None)
         if pairing and pairing.get("captain_id") in unavailable_caps:
             open_flights.append({**flight, "aircraft_type": ""})
-        elif not pairing and event_kind in {"crew_sickout"}:
+        elif not pairing and affected_pct > 0:
             open_flights.append({**flight, "aircraft_type": ""})
 
     result = _crew_ob_optimizer.solve(
         open_flights=open_flights,
         crew_members=members,
         existing_pairings=crews,
-        available_crew_ids=available_caps,
+        available_crew_ids=available_crew,
         event_kind=event_kind,
         disrupted_flight_ids=disrupted_ids,
         predictions=predictions,

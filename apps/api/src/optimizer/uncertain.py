@@ -14,9 +14,8 @@ This module **extends** that solver rather than replacing it:
      is the same cascade forecast times `s.scale`.
   2. Run the existing `RecoveryOptimizer.solve()` once per scenario. That gives,
      for each of the four objectives, a *perfect-foresight* decision set — what
-     you'd have done had you known the duration. FAR 117 stays a hard
-     constraint and the heuristic fallback still fires, because it is the same
-     solver, untouched.
+     you'd have done had you known the duration. Shared aircraft and supported
+     crew checks reject known failures; missing crew inputs remain unknown.
   3. Commit, per objective, the candidate solved for the closure length closest
      to the distribution's **mean** — the mean-value problem. Cancellations and
      swaps are here-and-now decisions; delays are whatever the realized closure
@@ -47,9 +46,11 @@ from __future__ import annotations
 
 import logging
 import math
+from dataclasses import replace
 from datetime import datetime, timedelta
 from statistics import NormalDist
 
+from src.optimizer.feasibility import validate_decision_locks
 from src.optimizer.milp import (
     AIRCRAFT_REPOSITION_COST,
     PLAN_WEIGHTS,
@@ -122,8 +123,19 @@ def solve_with_uncertain_horizon(
     disrupted_flights: list[str],
     cascade_predictions: dict[str, dict],
     horizon: dict,
+    decision_locks: list[dict] | None = None,
+    crew_members: list[dict] | None = None,
 ) -> list[RecoveryPlan]:
     """Solve the four objectives across sampled closure durations."""
+    locks = validate_decision_locks(decision_locks, schedule, aircraft)
+    disrupted_flights = list(dict.fromkeys([*disrupted_flights, *(r["flight_id"] for r in locks)]))
+    median_predictions = {fid: dict(row) for fid, row in cascade_predictions.items()}
+    for lock in locks:
+        locked_prediction = median_predictions.setdefault(lock["flight_id"], {})
+        locked_prediction["cascade_order"] = max(0, locked_prediction.get("cascade_order", -1))
+        locked_prediction["expected_delay_min"] = max(
+            locked_prediction.get("expected_delay_min", 0), lock.get("delay_minutes", 0)
+        )
     scenarios = duration_scenarios(
         horizon.get("median_minutes", 45.0), horizon.get("p95_minutes", 180.0)
     )
@@ -151,6 +163,8 @@ def solve_with_uncertain_horizon(
                 events=events,
                 disrupted_flights=disrupted_flights,
                 cascade_predictions=_scaled(cascade_predictions, scenario["scale"]),
+                decision_locks=locks,
+                crew_members=crew_members,
             )
             for plan in plans:
                 candidates[plan.plan_id].append(plan)
@@ -169,6 +183,12 @@ def solve_with_uncertain_horizon(
                     event_kind,
                     ac_type_map,
                     cascade_predictions,
+                    locks,
+                    crews,
+                    crew_members,
+                    aircraft,
+                    events,
+                    disrupted_flights,
                 )
                 for s in scenarios
             ]
@@ -197,6 +217,15 @@ def solve_with_uncertain_horizon(
         winner = min(commit_index, len(options) - 1)
         chosen = options[winner]
         row = costs[plan_id][winner]
+        if not all(math.isfinite(cost) for cost in row):
+            rejected = optimizer._infeasible_plan(plan_id, weights)
+            rejected.validation = {
+                "status": "fail",
+                "issues": ["Committed decisions are infeasible in at least one sampled duration"],
+                "scope": "Sampled scenarios only; not full stochastic optimization",
+            }
+            committed.append(rejected)
+            continue
         expected_cost = sum(s["weight"] * c for s, c in zip(scenarios, row))
         regrets = [row[i] - best_per_scenario[i] for i in range(len(scenarios))]
 
@@ -210,8 +239,21 @@ def solve_with_uncertain_horizon(
             event_kind,
             ac_type_map,
             disrupted_flights,
-            cascade_predictions,
+            median_predictions,
         )
+        plan = optimizer.validate_plan(
+            plan,
+            schedule,
+            aircraft,
+            crews,
+            events,
+            median_predictions,
+            {r["flight_id"]: r for r in locks},
+            crew_members,
+        )
+        if plan.status == "infeasible":
+            committed.append(plan)
+            continue
         plan.solve_time_ms = sum(o.solve_time_ms for o in options)
         plan.uncertainty = {
             "distribution": horizon.get("kind", "lognormal"),
@@ -266,19 +308,43 @@ def _cost_under(
     event_kind: str,
     ac_type_map: dict[str, str],
     predictions: dict[str, dict],
+    locks: list[dict],
+    crews: list[dict],
+    crew_members: list[dict] | None,
+    aircraft: list[dict],
+    events: list[dict],
+    active_flights: list[str],
 ) -> float:
     """Price this plan's decision set as if the closure ran `scale` × median.
 
     Cancellations and swaps are committed up front and do not change; the
     delays they leave behind stretch with the closure.
     """
-    delayed = [
-        {
-            "flight_id": d["flight_id"],
-            "delay_minutes": max(0, int(round(_base_delay(predictions, d) * scale))),
-        }
-        for d in plan.delayed_flights
-    ]
+    if plan.status == "infeasible":
+        return float("inf")
+    floors = {r["flight_id"]: r.get("delay_minutes", 0) for r in locks}
+    delayed = []
+    for fid in active_flights:
+        if fid not in flights_map or fid in plan.cancelled_flights:
+            continue
+        minutes = max(
+            floors.get(fid, 0),
+            int(round(predictions.get(fid, {}).get("expected_delay_min", 0) * scale)),
+        )
+        if minutes > 0:
+            delayed.append(_delay_row(flights_map[fid], fid, minutes))
+    checked = optimizer.validate_plan(
+        replace(plan, delayed_flights=delayed),
+        list(flights_map.values()),
+        aircraft,
+        crews,
+        events,
+        predictions,
+        {r["flight_id"]: r for r in locks},
+        crew_members,
+    )
+    if checked.status == "infeasible":
+        return float("inf")
     cost = optimizer.calc.portfolio_cost(
         flights=flights_map,
         cancelled=plan.cancelled_flights,
@@ -287,12 +353,6 @@ def _cost_under(
         aircraft_type_map=ac_type_map,
     )
     return cost["grand_total_usd"] + len(plan.aircraft_swaps) * AIRCRAFT_REPOSITION_COST
-
-
-def _base_delay(predictions: dict[str, dict], delayed_row: dict) -> int:
-    """Median-scenario delay for a row, so re-scoring never compounds scaling."""
-    pred = predictions.get(delayed_row.get("flight_id", ""), {})
-    return int(pred.get("expected_delay_min", delayed_row.get("delay_minutes", 0)))
 
 
 def _rebuild_at_median(

@@ -66,7 +66,12 @@ async def trigger_event(payload: TriggerEventRequest, request: Request):
         "triggered_at": datetime.now(timezone.utc).isoformat(),
         "params": merged_params,
     }
-    return await engine.trigger_event(event, predictor, optimizer, weather)
+    try:
+        return await engine.trigger_event(event, predictor, optimizer, weather)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.delete("/events/{event_id}")
@@ -75,7 +80,17 @@ async def cancel_event(event_id: str, request: Request):
     if not engine:
         raise HTTPException(status_code=503, detail="Simulation engine not initialized")
 
-    removed = await engine.cancel_event(event_id)
+    try:
+        removed = await engine.cancel_event(
+            event_id,
+            request.app.state.predictor,
+            request.app.state.optimizer,
+            request.app.state.weather,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
     if not removed:
         raise HTTPException(status_code=404, detail="Event not found")
     return {"status": "cancelled", "event_id": event_id}

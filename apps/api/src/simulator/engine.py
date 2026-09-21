@@ -9,6 +9,8 @@ optimizer, and broadcasts real-time updates to WebSocket subscribers.
 from __future__ import annotations
 
 import asyncio
+import copy
+import hashlib
 import json
 import logging
 import random
@@ -57,6 +59,8 @@ class SimulationState:
     ws_subscribers: set = field(default_factory=set)
     is_running: bool = False
     event_history: list[dict] = field(default_factory=list)
+    plan_context_hash: str | None = None
+    predictions: dict = field(default_factory=dict)
 
 
 class SimulationEngine:
@@ -156,10 +160,17 @@ class SimulationEngine:
         aircraft: list[dict],
         crews: list[dict],
         repository: "ScenarioRepository | None" = None,
+        *,
+        crew_members: list[dict] | None = None,
+        decision_locks: list[dict] | None = None,
     ):
         # Immutable network data (aircraft/crews)
         self.aircraft: dict[str, dict] = {a["id"]: a.copy() for a in aircraft}
         self.crews: dict[str, dict] = {c["id"]: c.copy() for c in crews}
+        self.crew_members = crew_members
+        self.decision_locks = decision_locks or []
+        self._services: tuple[CascadePredictor, RecoveryOptimizer, WeatherClient] | None = None
+        self._generation = 0
 
         # Mutable schedule
         self.schedule: dict[str, dict] = {f["id"]: f.copy() for f in schedule}
@@ -216,6 +227,8 @@ class SimulationEngine:
             "flight_states_pre_apply": self.state.flight_states_pre_apply,
             "is_running": self.state.is_running,
             "event_history": self.state.event_history,
+            "plan_context_hash": self.state.plan_context_hash,
+            "predictions": self.state.predictions,
         }
 
     def _restore_state_dict(self, data: dict) -> None:
@@ -228,6 +241,8 @@ class SimulationEngine:
         self.state.flight_states_pre_apply = data.get("flight_states_pre_apply", {})
         self.state.is_running = data.get("is_running", False)
         self.state.event_history = data.get("event_history", [])
+        self.state.plan_context_hash = data.get("plan_context_hash")
+        self.state.predictions = data.get("predictions", {})
 
     def _snapshot(self) -> None:
         if self._repo is not None and self.scenario_id is not None:
@@ -244,7 +259,17 @@ class SimulationEngine:
     ) -> dict:
         """Serialize state mutations while keeping the event loop responsive."""
         async with self._event_lock:
-            return await self._trigger_event_unlocked(event, predictor, optimizer, weather_client)
+            self._services = (predictor, optimizer, weather_client)
+            previous = copy.deepcopy(self.to_state_dict())
+            generation = self._generation
+            try:
+                return await self._trigger_event_unlocked(
+                    event, predictor, optimizer, weather_client
+                )
+            except BaseException:
+                if generation == self._generation:
+                    self._restore_state_dict(previous)
+                raise
 
     async def _trigger_event_unlocked(
         self,
@@ -291,111 +316,16 @@ class SimulationEngine:
         # Gather weather context
         metar_data = weather_client.get_all_cached()
 
-        # Run cascade predictor
-        flights_list = list(self.schedule.values())
-        logger.debug(
-            "CASCADE DEBUG — schedule_size=%d, event_kind=%s, params=%s",
-            len(flights_list),
-            event.get("kind"),
-            event.get("params"),
-        )
-        if flights_list:
-            sample = flights_list[0]
-            logger.info(
-                "CASCADE DEBUG — sample flight keys=%s, origin=%s, dest=%s",
-                list(sample.keys()),
-                sample.get("origin"),
-                sample.get("destination"),
-            )
-
-        predictions = predictor.predict(
-            flights=flights_list,
-            event=event,
-            metar_data=metar_data,
-            current_time=datetime.now(timezone.utc),
-        )
-
-        orders = [p.get("cascade_order", -1) for p in predictions.values()]
-        logger.debug(
-            "CASCADE DEBUG — predictions=%d, direct=%d, cascade1=%d, cascade2=%d, unaffected=%d",
-            len(predictions),
-            orders.count(0),
-            orders.count(1),
-            orders.count(2),
-            orders.count(-1),
-        )
-
-        # Update per-flight states
-        for fid, pred in predictions.items():
-            order = pred.get("cascade_order", -1)
-            if order >= 0:
-                delay_min = pred.get("expected_delay_min", 0)
-                self.state.flight_states[fid].update(
-                    {
-                        "status": "cancelled"
-                        if delay_min > 180
-                        else ("delayed" if delay_min > 0 else "scheduled"),
-                        "delay_minutes": delay_min,
-                        "cascade_order": order,
-                        "p_delayed": pred.get("p_delayed", 0.0),
-                        "last_event_id": event["id"],
-                    }
-                )
-
-        # Build disrupted flight list for optimizer
-        disrupted = [fid for fid, pred in predictions.items() if pred.get("cascade_order", -1) >= 0]
-        logger.debug("CASCADE DEBUG — disrupted_flights=%d, running optimizer", len(disrupted))
-
-        # Build optimizer constraints from event
-        constraints = self._event_to_constraints(event)
-
-        # Run recovery optimizer. Events whose duration is a distribution
-        # (drone incursion) go through the scenario-based solver instead —
-        # same CP-SAT model, run across sampled closure lengths.
-        from src.optimizer.uncertain import horizon_from_constraints, solve_with_uncertain_horizon
-
-        aircraft_list = list(self.aircraft.values())
-        crews_list = list(self.crews.values())
-        horizon = horizon_from_constraints(constraints)
-        if horizon:
-            plans = await asyncio.to_thread(
-                solve_with_uncertain_horizon,
-                optimizer,
-                schedule=flights_list,
-                aircraft=aircraft_list,
-                crews=crews_list,
-                events=constraints,
-                disrupted_flights=disrupted,
-                cascade_predictions=predictions,
-                horizon=horizon,
-            )
-        else:
-            plans = await asyncio.to_thread(
-                optimizer.solve,
-                schedule=flights_list,
-                aircraft=aircraft_list,
-                crews=crews_list,
-                events=constraints,
-                disrupted_flights=disrupted,
-                cascade_predictions=predictions,
-            )
-
-        self.state.recovery_plans = [
-            p.to_dict() if hasattr(p, "to_dict") else self._plan_to_dict(p) for p in plans
-        ]
-
-        # Compute cascade summary and persist it on state so that secondary
-        # pages (carbon, cascade, plans, etc.) hitting the WS for the first
-        # time can rebuild the same view without re-triggering the event.
-        cascade_summary = self._compute_cascade_summary(predictions)
-        self.state.cascade_summary = cascade_summary
+        predictions = await self._solve_active(predictor, optimizer, metar_data)
 
         # Build broadcast payload
         update: dict = {
             "type": "simulation_update",
             "event": event,
             "flight_states": self.state.flight_states,
-            "cascade_summary": cascade_summary,
+            "cascade_summary": self.state.cascade_summary,
+            "active_events": self.state.active_events,
+            "applied_plan_id": self.state.applied_plan_id,
             "recovery_plans": self.state.recovery_plans,
             "predictions": predictions,
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -409,33 +339,55 @@ class SimulationEngine:
         await self._broadcast(update)
         return update
 
-    async def cancel_event(self, event_id: str) -> bool:
-        """Remove an active event AND revert its impact from flight_states.
+    async def cancel_event(
+        self, event_id: str, predictor=None, optimizer=None, weather_client=None
+    ) -> bool:
+        """Recompute remaining disruptions; never retain a plan for removed constraints."""
+        async with self._event_lock:
+            services = (
+                (predictor, optimizer, weather_client) if predictor is not None else self._services
+            )
+            return await self._cancel_event_unlocked(event_id, services)
 
-        Every state written by trigger stamps `last_event_id`, so reverting is
-        a per-flight reset of exactly the flights this event touched. When the
-        last event goes, plans + cascade summary go with it (they were solved
-        against a disruption that no longer exists)."""
+    async def _cancel_event_unlocked(self, event_id, services):
         remaining = [event for event in self.state.active_events if event.get("id") != event_id]
         if len(remaining) == len(self.state.active_events):
             return False
 
+        if remaining and (services is None or any(service is None for service in services)):
+            raise RuntimeError("Recovery services unavailable; cannot recompute remaining events")
+        previous = copy.deepcopy(self.to_state_dict())
+        generation = self._generation
         self.state.active_events = remaining
-
-        # Revert the cancelled event's per-flight damage.
-        for fid, fstate in self.state.flight_states.items():
-            if fstate.get("last_event_id") == event_id:
-                self.state.flight_states[fid] = self._default_flight_state(fid)
-
-        if not remaining:
-            # No disruption left — plans and cascade are stale artifacts.
+        metar_data = {}
+        if remaining:
+            predictor, optimizer, weather_client = services
+            try:
+                metar_data = weather_client.get_all_cached()
+                await self._solve_active(predictor, optimizer, metar_data)
+            except BaseException:
+                if generation == self._generation:
+                    self._restore_state_dict(previous)
+                raise
+        else:
+            self.state.flight_states = {
+                fid: self._default_flight_state(fid) for fid in self.schedule
+            }
             self.state.recovery_plans = []
             self.state.cascade_summary = {}
             self.state.applied_plan_id = None
             self.state.flight_states_pre_apply = {}
-        else:
-            self.state.cascade_summary = self._cascade_summary_from_states()
+            self.state.plan_context_hash = None
+            self.state.predictions = {}
 
+        if self._repo is not None and self.scenario_id is not None:
+            self._repo.record_event(
+                self.scenario_id,
+                self._event_seq,
+                {"operation": "cancel", "event_id": event_id},
+                metar_data,
+            )
+            self._event_seq += 1
         self._snapshot()
         await self._broadcast(
             {
@@ -451,8 +403,134 @@ class SimulationEngine:
         )
         return True
 
+    def _context_hash(self):
+        inputs = [
+            self.schedule,
+            self.aircraft,
+            self.crews,
+            self.crew_members,
+            self.state.active_events,
+            self.decision_locks,
+        ]
+        return hashlib.sha256(json.dumps(inputs, sort_keys=True, default=str).encode()).hexdigest()
+
+    async def solve_current(self, predictor, optimizer, weather_client, disrupted_flight_ids=None):
+        """Re-solve the full active state, including dispatcher locks."""
+        async with self._event_lock:
+            self._services = (predictor, optimizer, weather_client)
+            if set(disrupted_flight_ids or []) - set(self.schedule):
+                raise ValueError("Unknown disrupted flight")
+            predictions = await self._solve_active(
+                predictor, optimizer, weather_client.get_all_cached(), disrupted_flight_ids
+            )
+            self._snapshot()
+            update = {
+                "type": "simulation_update",
+                **self.to_state_dict(),
+                "predictions": predictions,
+            }
+            await self._broadcast(update)
+            return update
+
+    async def _solve_active(self, predictor, optimizer, metar_data, disrupted_flight_ids=None):
+        """One solve against all active constraints and their joint affected-flight union."""
+        from src.optimizer.uncertain import horizon_from_constraints, solve_with_uncertain_horizon
+
+        predictions = {}
+        causes = {}
+        context_hash = self._context_hash()
+        generation = self._generation
+        flights = list(self.schedule.values())
+        for event in self.state.active_events:
+            current = predictor.predict(
+                flights=flights,
+                event=event,
+                metar_data=metar_data,
+                current_time=datetime.fromisoformat(event["triggered_at"].replace("Z", "+00:00")),
+            )
+            for fid, pred in current.items():
+                old = predictions.get(fid)
+                if old is None or pred.get("expected_delay_min", 0) > old.get(
+                    "expected_delay_min", 0
+                ):
+                    predictions[fid] = dict(pred)
+                    causes[fid] = event["id"]
+                if old and pred.get("cascade_order", -1) >= 0:
+                    selected = predictions[fid]
+                    selected["cascade_order"] = min(
+                        v for v in (old.get("cascade_order", -1), pred["cascade_order"]) if v >= 0
+                    )
+                    selected["p_delayed"] = max(old.get("p_delayed", 0), pred.get("p_delayed", 0))
+        # ponytail: simultaneous modeled impacts use max delay, not a sum that
+        # double-counts overlapping closures; sequential event-time propagation is a future model.
+        constraints = [
+            {**constraint, "kind": event.get("kind", "")}
+            for event in self.state.active_events
+            for constraint in self._event_to_constraints(event)
+        ]
+        kwargs = dict(
+            schedule=flights,
+            aircraft=list(self.aircraft.values()),
+            crews=list(self.crews.values()),
+            events=constraints,
+            disrupted_flights=sorted(
+                set(disrupted_flight_ids or [])
+                | {fid for fid, pred in predictions.items() if pred.get("cascade_order", -1) >= 0}
+            ),
+            cascade_predictions=predictions,
+        )
+        if self.decision_locks:
+            kwargs["decision_locks"] = self.decision_locks
+        if self.crew_members is not None:
+            kwargs["crew_members"] = self.crew_members
+        horizon = horizon_from_constraints(constraints)
+        if horizon and len(self.state.active_events) == 1:
+            plans = await asyncio.to_thread(
+                solve_with_uncertain_horizon, optimizer, horizon=horizon, **kwargs
+            )
+        else:
+            plans = await asyncio.to_thread(optimizer.solve, **kwargs)
+        if generation != self._generation or context_hash != self._context_hash():
+            raise RuntimeError(
+                "Simulation inputs changed while solving; discard stale result and retry"
+            )
+        self.state.flight_states = {fid: self._default_flight_state(fid) for fid in self.schedule}
+        for fid, pred in predictions.items():
+            if fid in self.state.flight_states and pred.get("cascade_order", -1) >= 0:
+                delay = pred.get("expected_delay_min", 0)
+                self.state.flight_states[fid].update(
+                    status="delayed" if delay > 0 else "scheduled",
+                    delay_minutes=delay,
+                    cascade_order=pred["cascade_order"],
+                    p_delayed=pred.get("p_delayed", 0),
+                    last_event_id=causes.get(fid),
+                    reason=pred.get("reason", ""),
+                )
+        self.state.recovery_plans = [
+            p.to_dict() if hasattr(p, "to_dict") else self._plan_to_dict(p) for p in plans
+        ]
+        self.state.cascade_summary = self._compute_cascade_summary(predictions)
+        self.state.cascade_summary["composition"] = "simultaneous_max_delay"
+        self.state.cascade_summary["uncertainty_evaluation"] = (
+            "not_evaluated_joint_events"
+            if horizon and len(self.state.active_events) > 1
+            else "sampled_single_event"
+            if horizon
+            else "not_requested"
+        )
+        self.state.cascade_summary["weather_basis"] = "frozen_at_solve"
+        self.state.cascade_summary["weather_snapshot_hash"] = hashlib.sha256(
+            json.dumps(metar_data, sort_keys=True, default=str).encode()
+        ).hexdigest()
+        self.state.applied_plan_id = None
+        self.state.flight_states_pre_apply = {}
+        self.state.plan_context_hash = context_hash
+        self.state.predictions = predictions
+        return predictions
+
     def reset(self) -> None:
         """Reset simulation to clean initial state (no events, no delays)."""
+        self._generation += 1
         for fid in self.schedule:
             self.state.flight_states[fid] = self._default_flight_state(fid)
         self.state.active_events.clear()
@@ -460,6 +538,8 @@ class SimulationEngine:
         self.state.cascade_summary = {}
         self.state.applied_plan_id = None
         self.state.flight_states_pre_apply = {}
+        self.state.plan_context_hash = None
+        self.state.predictions = {}
         # Keep event_history for audit log
 
         # Close out the persisted scenario (if any) — the next triggered
@@ -479,6 +559,7 @@ class SimulationEngine:
         reset(). Crews are left untouched: live traffic carries no pairings,
         and both the predictor and the optimizer tolerate flights without
         pairings (they just report zero crew violations)."""
+        self._generation += 1
         self.schedule = {f["id"]: f.copy() for f in schedule}
         self.aircraft = {a["id"]: a.copy() for a in aircraft}
         self.state.flight_states = {fid: self._default_flight_state(fid) for fid in self.schedule}
@@ -487,6 +568,8 @@ class SimulationEngine:
         self.state.cascade_summary = {}
         self.state.applied_plan_id = None
         self.state.flight_states_pre_apply = {}
+        self.state.plan_context_hash = None
+        self.state.predictions = {}
         if self._repo is not None and self.scenario_id is not None:
             self._repo.close_scenario(self.scenario_id)
         self.scenario_id = None
@@ -511,12 +594,25 @@ class SimulationEngine:
     async def apply_plan(self, plan_id: str) -> dict:
         """Commit the chosen plan's cancellations + delays + swaps onto the
         live simulation state and broadcast."""
+        async with self._event_lock:
+            return await self._apply_plan_unlocked(plan_id)
+
+    async def _apply_plan_unlocked(self, plan_id: str) -> dict:
         plan = next(
             (p for p in self.state.recovery_plans if p.get("plan_id") == plan_id),
             None,
         )
         if plan is None:
-            raise ValueError(f"Plan {plan_id} not found — solve first.")
+            raise KeyError(f"Plan {plan_id} not found — solve first.")
+        if plan.get("status") not in {"optimal", "feasible", "heuristic"}:
+            raise ValueError(f"Plan {plan_id} cannot be applied: status {plan.get('status')!r}.")
+        if plan.get("crew_violations", 0) or (plan.get("validation") or {}).get("status") == "fail":
+            raise ValueError(f"Plan {plan_id} has failed modeled constraints; solve again")
+        if (
+            self.state.plan_context_hash is not None
+            and self.state.plan_context_hash != self._context_hash()
+        ) or (self.state.active_events and self.state.plan_context_hash is None):
+            raise RuntimeError("Plan inputs are stale; solve again before applying")
 
         # If a different plan is already applied, restore from snapshot first
         # so we don't compound two plans' decisions on top of each other.
@@ -602,6 +698,10 @@ class SimulationEngine:
 
     async def unapply_plan(self) -> dict:
         """Restore flight_states from the pre-apply snapshot and broadcast."""
+        async with self._event_lock:
+            return await self._unapply_plan_unlocked()
+
+    async def _unapply_plan_unlocked(self) -> dict:
         if not self.state.flight_states_pre_apply:
             # Nothing to revert — just clear the marker and announce.
             self.state.applied_plan_id = None
@@ -633,6 +733,17 @@ class SimulationEngine:
         orders = [s.get("cascade_order", -1) for s in self.state.flight_states.values()]
         delays = [s.get("delay_minutes", 0) for s in self.state.flight_states.values()]
         return {
+            **{
+                key: value
+                for key, value in self.state.cascade_summary.items()
+                if key
+                in {
+                    "composition",
+                    "uncertainty_evaluation",
+                    "weather_basis",
+                    "weather_snapshot_hash",
+                }
+            },
             "directly_affected": orders.count(0),
             "cascade_1": orders.count(1),
             "cascade_2": orders.count(2),

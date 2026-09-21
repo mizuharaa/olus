@@ -1,6 +1,6 @@
 """Tests for FAR Part 117 crew legality engine."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -14,33 +14,42 @@ def engine():
 
 def _crew(
     duty_start_hour: int = 8,
-    flight_time_7d_min: int = 0,
+    fdp_time_7d_min: int = 0,
     flight_time_28d_min: int = 0,
     flight_time_365d_min: int = 0,
     fdp_flight_min: int = 0,
-    last_rest_end_hours_ago: float = 12.0,
+    rest_hours: float = 12.0,
 ) -> dict:
-    now = datetime(2024, 1, 15, duty_start_hour, 0, 0)
-    last_rest = now - timedelta(hours=last_rest_end_hours_ago)
+    now = datetime(2024, 1, 15, duty_start_hour, 0, 0, tzinfo=timezone.utc)
+    last_rest = now - timedelta(hours=rest_hours)
     return {
         "id": "CAP001",
         "role": "captain",
         "duty_start": now,
-        "flight_time_7d_minutes": flight_time_7d_min,
+        "fdp_time_7d_minutes": fdp_time_7d_min,
+        "fdp_time_28d_minutes": 0,
         "flight_time_28d_minutes": flight_time_28d_min,
         "flight_time_365d_minutes": flight_time_365d_min,
-        "last_rest_end": last_rest,
+        "last_rest_start": last_rest,
+        "last_rest_end": now,
+        "sleep_opportunity_minutes": 480,
+        "consecutive_duty_free_168h_minutes": 1800,
+        "home_timezone_offset_hours": 0,
+        "acclimated_at_home": True,
+        "acclimated": True,
+        "operation_type": "unaugmented",
         "current_fdp_start": now,
         "current_fdp_flight_minutes": fdp_flight_min,
     }
 
 
 def _pairing(dep_hour: int, duration_min: int) -> dict:
-    dep = datetime(2024, 1, 15, dep_hour, 0, 0)
+    dep = datetime(2024, 1, 15, dep_hour, 0, 0, tzinfo=timezone.utc)
     return {
         "departure": dep,
         "arrival": dep + timedelta(minutes=duration_min),
         "flight_time_minutes": duration_min,
+        "scheduled_segments": 1,
     }
 
 
@@ -76,21 +85,21 @@ class TestBasicLegality:
 
 class TestRestRequirements:
     def test_minimum_rest_satisfied(self, engine):
-        crew = _crew(duty_start_hour=8, last_rest_end_hours_ago=11.0)  # 11h rest
+        crew = _crew(duty_start_hour=8, rest_hours=11.0)
         pairing = _pairing(dep_hour=8, duration_min=90)
         result = engine.validate(crew, pairing)
         assert result.is_legal
 
     def test_minimum_rest_violated(self, engine):
         """FAR 117: minimum 10 consecutive hours of rest before FDP."""
-        crew = _crew(duty_start_hour=8, last_rest_end_hours_ago=8.0)  # only 8h rest
+        crew = _crew(duty_start_hour=8, rest_hours=8.0)
         pairing = _pairing(dep_hour=8, duration_min=90)
         result = engine.validate(crew, pairing)
         assert not result.is_legal
         assert any("rest" in v.lower() for v in result.violations)
 
     def test_exact_10h_rest_is_legal(self, engine):
-        crew = _crew(duty_start_hour=8, last_rest_end_hours_ago=10.0)
+        crew = _crew(duty_start_hour=8, rest_hours=10.0)
         pairing = _pairing(dep_hour=8, duration_min=90)
         result = engine.validate(crew, pairing)
         assert result.is_legal
@@ -98,14 +107,14 @@ class TestRestRequirements:
 
 class TestCumulativeLimits:
     def test_7day_limit_ok(self, engine):
-        crew = _crew(flight_time_7d_min=3300)  # 55h of 60h limit
+        crew = _crew(fdp_time_7d_min=3300)  # 55h FDP of 60h limit
         pairing = _pairing(dep_hour=9, duration_min=120)  # +2h = 57h
         result = engine.validate(crew, pairing)
         assert result.is_legal
 
     def test_7day_limit_exceeded(self, engine):
-        """FAR 117: max 60h flight time per 7 days."""
-        crew = _crew(flight_time_7d_min=3500)  # 58h20m
+        """117.23(c): 60h flight DUTY period in 168 consecutive hours."""
+        crew = _crew(fdp_time_7d_min=3500)
         pairing = _pairing(dep_hour=9, duration_min=150)  # +2h30m = over 60h
         result = engine.validate(crew, pairing)
         assert not result.is_legal
@@ -141,11 +150,12 @@ class TestCumulativeLimits:
 
 class TestWOCL:
     def test_wocl_window_warning(self, engine):
-        """Flights in WOCL (0200-0559) should generate a warning."""
+        """WOCL does not justify the old invented half-hour Table B reduction."""
         crew = _crew(duty_start_hour=1)  # 1am duty start
         pairing = _pairing(dep_hour=3, duration_min=90)  # 3am departure = WOCL
         result = engine.validate(crew, pairing)
-        assert len(result.warnings) > 0 or not result.is_legal
+        assert engine.fdp_limit_for_report_time(crew["duty_start"]) == 9
+        assert next(c for c in result.checks if c["rule"] == "modeled-fdp")["limit"] == 540
 
     def test_normal_hours_no_wocl_warning(self, engine):
         crew = _crew(duty_start_hour=8)

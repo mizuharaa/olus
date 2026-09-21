@@ -1,21 +1,16 @@
 """
 Airline delay and cancellation cost calculator.
 
-All rates sourced from publicly available data:
-  - DOT Form 41 Schedule P-5.2 (carrier operating costs, 2022-2023)
-  - DOT Bureau of Transportation Statistics "Cost of Airline Delays" (2023)
-    https://www.bts.gov/topics/airlines-and-airports/cost-delay-statistics
-  - A4A (Airlines for America) Annual Report 2023
-  - GAO-14-398 "Airline Passenger Protections" (DOT 261 compensation)
-  - FAA Economic Values for FAA Investment and Regulatory Decisions (2021)
-
-Passenger VOT (value of time): $44.40/hr per DOT 2023 guidance,
-applied as delay cost. Airlines typically absorb 55-65% of downstream costs.
+Fixed economic assumptions for comparing scenarios, not observed expenditure,
+current tariff data, or statutory compensation entitlements. Operating cost,
+passenger time and modeled goodwill are distinct components of a decision score.
 """
 
 from __future__ import annotations
 
-from src.data.airlines import get_aircraft_info
+import math
+
+from src.data.airlines import get_aircraft_info, resolve_aircraft_type
 
 # ── Core DOT rates ─────────────────────────────────────────────────────────────
 
@@ -24,21 +19,17 @@ from src.data.airlines import get_aircraft_info
 # Business: $58.40/hr, Personal: $36.60/hr → weighted avg $44.40/hr
 PAX_VOT_PER_HOUR_USD = 44.40
 
-# BTS "cost of delay" adds missed connections, hotel/meal/ground:
-# BTS 2023: $82.50 total cost per passenger per hour of delay
-PAX_TOTAL_DELAY_COST_PER_HOUR_USD = 82.50
+# Use time value only here; modeled accommodation/goodwill is added separately.
+PAX_TOTAL_DELAY_COST_PER_HOUR_USD = PAX_VOT_PER_HOUR_USD
 PAX_TOTAL_DELAY_COST_PER_MIN_USD = PAX_TOTAL_DELAY_COST_PER_HOUR_USD / 60
 
 # Variable fraction of block-hour cost that accrues during a delay
 # (crew duty, APU fuel, maintenance labour prorated — not gate fees)
 VARIABLE_COST_FRACTION = 0.62
 
-# DOT 14 CFR 261 involuntary denied boarding compensation
-# (applies to oversales; extended voluntarily to lengthy mechanical delays)
-DOT_261_DOMESTIC_2H_USD = 400
-DOT_261_DOMESTIC_4H_USD = 800
-DOT_261_INTL_4H_USD = 675
-DOT_261_INTL_8H_USD = 1_350
+# Hypothetical airline goodwill schedule, not statutory denied-boarding rules.
+MODELED_COMPENSATION_2H_USD = 400
+MODELED_COMPENSATION_4H_USD = 800
 
 # Cancellation economics
 AVG_ONE_WAY_FARE_USD = 210  # A4A 2023 average domestic one-way
@@ -49,6 +40,35 @@ VOLUNTARY_COMP_CANCEL_USD = 15_000  # typical airline voucher/miles pool per can
 # Crew economics
 CREW_OVERTIME_PER_HOUR_USD = 480  # pilot collective bargaining avg (2023 contracts)
 CREW_REPOSITION_COST_USD = 2_500  # one-way DH ticket + hotel for repositioned crew pair
+AIRCRAFT_REPOSITION_COST_USD = 8_000  # fixed scenario allowance, shared by scoring/explanations
+AIRLINE_FAULT_EVENTS = {"mechanical_aog", "crew_sickout", "cyber_incident"}
+
+
+def economic_event_kind(events: list[dict]) -> str:
+    """A single modeled cause, or unknown for mixed causes; not a legal fault finding."""
+    # Constraint aliases describe physical effects, not financial responsibility.
+    kinds = {
+        "crew_sickout" if event.get("kind") == "labor_action" else event.get("kind", "")
+        for event in events
+    }
+    return next(iter(kinds)) if len(kinds) == 1 else ""
+
+
+def passenger_count(flight: dict, aircraft_type: str = "") -> tuple[int, bool]:
+    """One count across monetary and time ledgers; missing loads remain estimates."""
+    value = flight.get("passengers")
+    if value is None:
+        ac_type = aircraft_type or flight.get("aircraft_type") or "UNKN"
+        return int(get_aircraft_info(ac_type)["seats"]), False
+    if (
+        isinstance(value, bool)
+        or not isinstance(value, (int, float))
+        or not math.isfinite(value)
+        or value < 0
+        or value != int(value)
+    ):
+        raise ValueError("passengers must be a nonnegative integer")
+    return int(value), True
 
 
 class DelayInfo:
@@ -100,7 +120,8 @@ class CancellationInfo:
         self.breakdown = {
             "revenue_loss_usd": round(revenue_loss),
             "rebook_cost_usd": round(rebook_cost),
-            "dot261_compensation_usd": round(compensation),
+            "modeled_compensation_usd": round(compensation),
+            "compensation_basis": "scenario_goodwill_assumption",
             "voluntary_comp_usd": round(voluntary_comp),
             "total_usd": round(self.total),
         }
@@ -108,7 +129,7 @@ class CancellationInfo:
 
 class AirlineDelayCalculator:
     """
-    Compute real delay and cancellation costs using DOT/BTS published rates.
+    Compute modeled delay and cancellation economic impacts.
 
     Usage:
         calc = AirlineDelayCalculator()
@@ -137,26 +158,26 @@ class AirlineDelayCalculator:
         ac_info = get_aircraft_info(ac_type)
         block_hr = ac_info["block_hr_usd"]
 
-        pax = max(1, flight.get("passengers", ac_info["seats"]))
+        pax, _ = passenger_count(flight, ac_type)
+        if not math.isfinite(delay_minutes) or delay_minutes < 0:
+            raise ValueError("delay_minutes must be finite and nonnegative")
         delay_hours = delay_minutes / 60.0
 
         # 1. Variable operating cost (crew on duty, APU/tow fuel, maint prorated)
         ops_cost = block_hr * VARIABLE_COST_FRACTION * delay_hours
 
-        # 2. Passenger delay cost (DOT BTS total cost model)
+        # 2. Passenger time cost, distinct from modeled goodwill below.
         pax_cost = pax * PAX_TOTAL_DELAY_COST_PER_MIN_USD * delay_minutes
 
-        # 3. DOT 261 / voluntary compensation
-        #    Only mechanical/crew causes trigger compensation obligations.
-        #    Weather/ATC do not (force majeure) but airlines often offer vouchers.
-        comp_eligible = event_kind in ("mechanical_aog", "crew_sickout", "cyber_incident", "")
+        # 3. Scenario goodwill policy, not a determination of legal entitlement.
+        comp_eligible = economic_event_kind([{"kind": event_kind}]) in AIRLINE_FAULT_EVENTS
         if comp_eligible:
             if delay_minutes >= 240:
-                comp_per_pax = DOT_261_DOMESTIC_4H_USD
+                comp_per_pax = MODELED_COMPENSATION_4H_USD
                 # Only ~25% of passengers actually claim
                 compensation = pax * comp_per_pax * 0.25
             elif delay_minutes >= 120:
-                comp_per_pax = DOT_261_DOMESTIC_2H_USD
+                comp_per_pax = MODELED_COMPENSATION_2H_USD
                 compensation = pax * comp_per_pax * 0.15
             else:
                 compensation = 0.0
@@ -186,11 +207,10 @@ class AirlineDelayCalculator:
         """
         Compute total cancellation cost for one flight.
 
-        Includes revenue loss, rebooking, DOT 261, and voluntary compensation.
+        Includes revenue loss, rebooking and modeled goodwill allowances.
         """
         ac_type = aircraft_type or flight.get("aircraft_type", "") or "UNKN"
-        ac_info = get_aircraft_info(ac_type)
-        pax = max(1, flight.get("passengers", ac_info["seats"]))
+        pax, _ = passenger_count(flight, ac_type)
 
         # 1. Revenue loss: refund average fare × load factor (pax already = loaded seats)
         revenue_loss = pax * AVG_ONE_WAY_FARE_USD
@@ -198,11 +218,11 @@ class AirlineDelayCalculator:
         # 2. Rebooking costs
         rebook_cost = pax * REBOOK_FRACTION * REBOOK_COST_PER_PAX_USD
 
-        # 3. DOT 261 — cancellations always qualify (if airline-caused)
-        airline_caused = event_kind in ("mechanical_aog", "crew_sickout", "cyber_incident", "")
+        # 3. Hypothetical airline-caused disruption goodwill allowance.
+        airline_caused = economic_event_kind([{"kind": event_kind}]) in AIRLINE_FAULT_EVENTS
         if airline_caused:
             # ~30% of passengers claim voucher; avg $800 domestic
-            compensation = pax * DOT_261_DOMESTIC_4H_USD * 0.30
+            compensation = pax * MODELED_COMPENSATION_4H_USD * 0.30
         else:
             compensation = 0.0
 
@@ -234,6 +254,8 @@ class AirlineDelayCalculator:
         total_cancel_usd = 0.0
         total_delay_usd = 0.0
         total_pax_delay_min = 0
+        passengers_without_recovery_time = 0
+        flights_with_assumed_passenger_count = 0
         cancel_details: list[dict] = []
         delay_details: list[dict] = []
 
@@ -244,24 +266,65 @@ class AirlineDelayCalculator:
                 flight, event_kind=event_kind, aircraft_type=ac_type
             )
             total_cancel_usd += cancel_info.total
-            cancel_details.append({"flight_id": fid, **cancel_info.breakdown})
+            pax, count_known = passenger_count(flight, ac_type)
+            flights_with_assumed_passenger_count += int(not count_known)
+            recovery_delay = flight.get("reaccommodation_delay_minutes")
+            if recovery_delay is None:
+                passengers_without_recovery_time += pax
+            elif not math.isfinite(recovery_delay) or recovery_delay < 0:
+                raise ValueError("reaccommodation_delay_minutes must be finite and nonnegative")
+            else:
+                total_pax_delay_min += pax * recovery_delay
+            cancel_details.append(
+                {
+                    "flight_id": fid,
+                    "passengers": pax,
+                    "passenger_count_known": count_known,
+                    "aircraft_model": resolve_aircraft_type(
+                        ac_type or flight.get("aircraft_type") or "UNKN"
+                    ),
+                    **cancel_info.breakdown,
+                }
+            )
 
         for d in delayed:
             fid = d["flight_id"]
             delay_min = d.get("delay_minutes", 0)
             flight = flights.get(fid, {})
-            pax = max(1, flight.get("passengers", 150))
             ac_type = ac_map.get(fid, "")
+            pax, count_known = passenger_count(flight, ac_type)
+            flights_with_assumed_passenger_count += int(not count_known)
             delay_info = self.delay_cost(
                 flight, delay_min, event_kind=event_kind, aircraft_type=ac_type
             )
             total_delay_usd += delay_info.total
             total_pax_delay_min += pax * delay_min
-            delay_details.append({"flight_id": fid, "delay_min": delay_min, **delay_info.breakdown})
+            delay_details.append(
+                {
+                    "flight_id": fid,
+                    "passengers": pax,
+                    "passenger_count_known": count_known,
+                    "aircraft_model": resolve_aircraft_type(
+                        ac_type or flight.get("aircraft_type") or "UNKN"
+                    ),
+                    "delay_min": delay_min,
+                    **delay_info.breakdown,
+                }
+            )
 
         grand_total = total_cancel_usd + total_delay_usd
 
         return {
+            "model_version": "scenario-economics-2026-09-20",
+            "estimate_only": True,
+            "cost_basis": "modeled_economic_impact_not_observed_cash",
+            "compensation_basis": "scenario_goodwill_assumption",
+            "passenger_time_usd_per_hour": PAX_VOT_PER_HOUR_USD,
+            "passenger_delay_complete": passengers_without_recovery_time == 0
+            and flights_with_assumed_passenger_count == 0,
+            "flights_with_assumed_passenger_count": flights_with_assumed_passenger_count,
+            "missing_passenger_count_basis": "aircraft_capacity_assumption",
+            "passengers_without_recovery_time": passengers_without_recovery_time,
             "grand_total_usd": round(grand_total),
             "cancellation_total_usd": round(total_cancel_usd),
             "delay_total_usd": round(total_delay_usd),
@@ -270,4 +333,6 @@ class AirlineDelayCalculator:
             "delayed_count": len(delayed),
             "per_cancelled": cancel_details[:20],  # truncate for API
             "per_delayed": delay_details[:20],
+            "per_cancelled_omitted": max(0, len(cancel_details) - 20),
+            "per_delayed_omitted": max(0, len(delay_details) - 20),
         }

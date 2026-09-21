@@ -1,0 +1,204 @@
+{
+    "metrics": {
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 9760,
+            "thresholds": {
+                "rate==0": false
+            },
+            "value": 0
+        },
+        "http_req_blocked": {
+            "p(95)": 0,
+            "p(99)": 0.531264,
+            "min": 0,
+            "max": 8.8885,
+            "avg": 0.026388903688524572,
+            "med": 0
+        },
+        "http_req_tls_handshaking": {
+            "min": 0,
+            "max": 0,
+            "avg": 0,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0
+        },
+        "data_sent": {
+            "rate": 13916.227399500041,
+            "count": 855220
+        },
+        "http_req_receiving": {
+            "avg": 22.098406260245905,
+            "med": 8.030000000000001,
+            "p(95)": 96.8592599999999,
+            "p(99)": 151.55576399999998,
+            "min": 0,
+            "max": 243.6085
+        },
+        "http_reqs": {
+            "count": 9760,
+            "rate": 158.8157192524969
+        },
+        "http_req_waiting": {
+            "avg": 72.29866642418062,
+            "med": 58.97005,
+            "p(95)": 180.38719499999996,
+            "p(99)": 227.49666100000002,
+            "min": 0.5065,
+            "max": 675.9788
+        },
+        "http_req_connecting": {
+            "avg": 0.015847940573770487,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "min": 0,
+            "max": 8.0838
+        },
+        "http_req_duration{expected_response:true}": {
+            "med": 83.4101,
+            "p(95)": 214.9454,
+            "p(99)": 254.73833299999995,
+            "min": 0.5215,
+            "max": 720.6829,
+            "avg": 94.42185751024574
+        },
+        "iterations": {
+            "rate": 19.851964906562113,
+            "count": 1220
+        },
+        "checks": {
+            "fails": 0,
+            "passes": 9760,
+            "thresholds": {
+                "rate==1": false
+            },
+            "value": 1
+        },
+        "failed_requests": {
+            "passes": 0,
+            "fails": 9760,
+            "value": 0
+        },
+        "iteration_duration": {
+            "p(95)": 1477.3474199999998,
+            "p(99)": 1604.125007999999,
+            "min": 546.4479,
+            "max": 1662.9256,
+            "avg": 1257.604276393444,
+            "med": 1328.79645
+        },
+        "http_req_duration": {
+            "avg": 94.42185751024574,
+            "med": 83.4101,
+            "p(95)": 214.9454,
+            "p(99)": 254.73833299999995,
+            "min": 0.5215,
+            "max": 720.6829
+        },
+        "http_req_sending": {
+            "max": 2.5828,
+            "avg": 0.024784825819672132,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0.6173729999999993,
+            "min": 0
+        },
+        "network_duration": {
+            "med": 34.823750000000004,
+            "p(95)": 170.77649,
+            "p(99)": 250.41627799999986,
+            "min": 0.5395,
+            "max": 720.6829,
+            "avg": 59.35748622950841
+        },
+        "vus": {
+            "value": 25,
+            "min": 25,
+            "max": 25
+        },
+        "data_received": {
+            "count": 279927780,
+            "rate": 4555013.49584577
+        },
+        "schedule_duration": {
+            "avg": 121.28664278688515,
+            "med": 119.3829,
+            "p(95)": 236.48,
+            "p(99)": 273.9077,
+            "min": 7.7147,
+            "max": 300.2547
+        },
+        "vus_max": {
+            "value": 25,
+            "min": 25,
+            "max": 25
+        }
+    },
+    "setup_data": {},
+    "root_group": {
+            "name": "",
+            "path": "",
+            "id": "d41d8cd98f00b204e9800998ecf8427e",
+            "groups": {},
+            "checks": {
+                    "network 200": {
+                        "name": "network 200",
+                        "path": "::network 200",
+                        "id": "1630b5a191d223484e7798253e844a5e",
+                        "passes": 1220,
+                        "fails": 0
+                    },
+                    "schedule 200": {
+                        "path": "::schedule 200",
+                        "id": "9b096765d21300dbf7453f193b8d1c6d",
+                        "passes": 1220,
+                        "fails": 0,
+                        "name": "schedule 200"
+                    },
+                    "simulator_state 200": {
+                        "name": "simulator_state 200",
+                        "path": "::simulator_state 200",
+                        "id": "fc00437d9ab7666df93abaa98655d630",
+                        "passes": 1220,
+                        "fails": 0
+                    },
+                    "events_types 200": {
+                        "passes": 1220,
+                        "fails": 0,
+                        "name": "events_types 200",
+                        "path": "::events_types 200",
+                        "id": "0ab983ef102d904a82ad10cdc348e5a8"
+                    },
+                    "airports 200": {
+                        "name": "airports 200",
+                        "path": "::airports 200",
+                        "id": "f265d5424ed2eb256f91e0c3e2c25dfc",
+                        "passes": 1220,
+                        "fails": 0
+                    },
+                    "aircraft 200": {
+                        "fails": 0,
+                        "name": "aircraft 200",
+                        "path": "::aircraft 200",
+                        "id": "ee7d825fb2cfc0c701cea029c62f4adc",
+                        "passes": 1220
+                    },
+                    "crews 200": {
+                        "name": "crews 200",
+                        "path": "::crews 200",
+                        "id": "c5fad48735c2224c6c99910c1711339f",
+                        "passes": 1220,
+                        "fails": 0
+                    },
+                    "recovery_plans 200": {
+                        "id": "e06abaf6131f213cc76987bde419d6b3",
+                        "passes": 1220,
+                        "fails": 0,
+                        "name": "recovery_plans 200",
+                        "path": "::recovery_plans 200"
+                    }
+                }
+        }
+}

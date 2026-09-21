@@ -13,12 +13,12 @@ from datetime import datetime
 
 from fastapi import APIRouter, Request
 
+from src.costs.calculator import AIRLINE_FAULT_EVENTS, economic_event_kind, passenger_count
+from src.events.catalog import EVENT_DEFAULTS
 from src.network import cache
 
 router = APIRouter()
 
-# Events where the airline bears full operational responsibility
-AIRLINE_FAULT_EVENTS = {"crew_sickout", "mechanical_aog", "cyber_incident"}
 
 # Static hotel data keyed to Nimbus Air airport codes (3 per airport)
 AIRPORT_HOTELS: dict[str, list[dict]] = {
@@ -421,8 +421,12 @@ def _load_flights() -> list[dict]:
     return cache.get_flights()
 
 
-def _is_airline_fault(event_kind: str) -> bool:
-    return event_kind in AIRLINE_FAULT_EVENTS
+def _is_airline_fault(event_kind: str) -> bool | None:
+    return (
+        economic_event_kind([{"kind": event_kind}]) in AIRLINE_FAULT_EVENTS
+        if event_kind in EVENT_DEFAULTS
+        else None
+    )
 
 
 def _compensation_for_flight(
@@ -433,18 +437,25 @@ def _compensation_for_flight(
     p_delayed: float,
 ) -> dict:
     fault = _is_airline_fault(event_kind)
-    pax = max(1, flight.get("passengers", 150))
+    pax, count_known = passenger_count(flight)
 
     comp: dict = {
+        "estimate_only": True,
+        "legal_entitlement_evaluated": False,
+        "allowance_unit": "usd_per_passenger",
+        "passengers": pax,
+        "passenger_count_known": count_known,
+        "passenger_count_basis": "declared" if count_known else "aircraft_capacity_assumption",
         "is_airline_fault": fault,
         "event_category": "Airline Operational Fault"
         if fault
-        else "Force Majeure / Extraordinary Circumstance",
-        "legal_basis": "14 CFR §250 / DOT Enforcement Policy"
-        if fault
-        else "No DOT-mandated cash compensation",
+        else "Unknown"
+        if fault is None
+        else "Modeled external disruption",
+        "legal_basis": "Illustrative Nimbus Air policy; legal entitlements not evaluated",
         "meal_voucher_usd": 0,
         "hotel_required": False,
+        "hotel_allowance_usd": 0,
         "hotel_transport_usd": 0,
         "travel_credit_usd": 0,
         "dot261_cash_usd": 0,
@@ -455,14 +466,15 @@ def _compensation_for_flight(
     }
 
     if fault:
-        comp["rebooking"] = "required"
+        comp["rebooking"] = "modeled_policy"
 
         if delay_minutes >= 120:
             comp["meal_voucher_usd"] = 15
-            comp["actions"].append("Issue $15 meal voucher (2h+ delay — DOT required)")
+            comp["actions"].append("Modeled policy: $15 meal voucher per passenger for 2h+ delay")
 
         if delay_minutes >= 240:
             comp["hotel_required"] = True
+            comp["hotel_allowance_usd"] = 150
             comp["hotel_transport_usd"] = 30  # estimated ground transport
             comp["actions"].append("Arrange hotel accommodation + $30 ground transport (4h+ delay)")
 
@@ -470,15 +482,14 @@ def _compensation_for_flight(
             comp["dot261_cash_usd"] = min(1_550, AVG_DOMESTIC_FARE_USD * 4)
             comp["travel_credit_usd"] = 200
             comp["actions"].append(
-                f"Involuntary denied boarding: offer ${comp['dot261_cash_usd']:.0f} cash "
-                f"OR full refund + $200 travel credit"
+                f"Modeled cancellation allowance: ${comp['dot261_cash_usd']:.0f} plus "
+                f"$200 travel credit per passenger; not a statutory entitlement"
             )
 
         comp["estimated_total_usd"] = (
             comp["meal_voucher_usd"] * pax
-            + (comp["hotel_transport_usd"] + 150) * pax * int(comp["hotel_required"])
-            + comp["dot261_cash_usd"]
-            + comp["travel_credit_usd"]
+            + (comp["hotel_transport_usd"] + comp["hotel_allowance_usd"]) * pax
+            + (comp["dot261_cash_usd"] + comp["travel_credit_usd"]) * pax
         )
 
     else:
@@ -487,15 +498,17 @@ def _compensation_for_flight(
 
         if delay_minutes >= 180:
             comp["meal_voucher_usd"] = 10
-            comp["goodwill_notes"].append("Offer $10 goodwill meal voucher (not legally required)")
+            comp["goodwill_notes"].append("Modeled goodwill: $10 meal voucher per passenger")
 
         if is_cancelled:
             comp["goodwill_notes"].append(
-                "Offer full refund or rebooking; no cash DOT compensation required"
+                "Evaluate refund/rebooking rights separately; this model does not determine eligibility"
             )
 
         comp["estimated_total_usd"] = comp["meal_voucher_usd"] * pax
 
+    comp["modeled_cash_allowance_usd"] = comp["dot261_cash_usd"]
+    comp["deprecated_aliases"] = {"dot261_cash_usd": "modeled_cash_allowance_usd"}
     return comp
 
 
@@ -510,19 +523,24 @@ async def passenger_impact(request: Request):
     """
     engine = getattr(request.app.state, "engine", None)
 
-    flights = _load_flights()
+    flights = list(engine.schedule.values()) if engine else _load_flights()
     flights_by_id = {f["id"]: f for f in flights}
+    aircraft = engine.aircraft if engine else {a["id"]: a for a in cache.get_aircraft()}
 
     active_events: list[dict] = engine.state.active_events if engine else []
     flight_states: dict = engine.state.flight_states if engine else {}
-    event_kind = active_events[0].get("kind", "") if active_events else ""
+    event_kind = economic_event_kind(active_events)
 
     results = []
     for fid, fstate in flight_states.items():
         if fstate.get("cascade_order", -1) < 0:
             continue
 
-        flight = flights_by_id.get(fid, {})
+        flight = flights_by_id.get(fid)
+        if flight is None:
+            continue
+        tail = aircraft.get(fstate.get("aircraft_id") or flight.get("aircraft_id", ""), {})
+        flight = {**flight, "aircraft_type": tail.get("type") or flight.get("aircraft_type", "")}
         delay_min = max(0, int(fstate.get("delay_minutes", 0)))
         p_delayed = fstate.get("p_delayed", 0.5)
         is_cancelled = fstate.get("status") == "cancelled"
@@ -566,18 +584,28 @@ async def passenger_impact(request: Request):
                 "destination": destination,
                 "status": fstate.get("status", "delayed"),
                 "cascade_order": cascade_order,
-                "delay_minutes": delay_min,
+                "delay_minutes": None if is_cancelled else delay_min,
+                "delay_status": "recovery_time_unknown" if is_cancelled else "modeled_delay",
                 "p_delayed": round(p_delayed, 2),
-                "confidence_interval": {"low_min": ci_low, "high_min": ci_high},
+                "confidence_interval": {
+                    "low_min": None if is_cancelled else ci_low,
+                    "high_min": None if is_cancelled else ci_high,
+                    "basis": "not_applicable_to_cancelled_flight"
+                    if is_cancelled
+                    else "heuristic_display_range_not_statistical_confidence",
+                },
                 "new_departure": new_dep,
-                "passengers": flight.get("passengers", 0),
+                "passengers": comp["passengers"],
+                "passenger_count_known": comp["passenger_count_known"],
                 "compensation": comp,
                 "ground_transport_alternative": ground_alt,
             }
         )
 
     # Sort: directly impacted first, then by delay descending
-    results.sort(key=lambda r: (r["cascade_order"], -r["delay_minutes"]))
+    results.sort(
+        key=lambda r: (r["cascade_order"], r["status"] != "cancelled", -(r["delay_minutes"] or 0))
+    )
 
     return {
         "event_kind": event_kind,
@@ -598,7 +626,7 @@ async def nearby_hotels(airport_code: str):
     return {
         "airport": code,
         "hotels": hotels,
-        "note": "Prices are estimated nightly rack rates. Nimbus Air will cover hotel + $30 transport for airline-fault cancellations/4h+ delays.",
+        "note": "Illustrative hotel prices, not live availability. Hotel and transport coverage are scenario assumptions, not an entitlement determination.",
     }
 
 
@@ -609,7 +637,8 @@ async def rebooking_options(request: Request):
     flights on the same city-pair.
     """
     engine = getattr(request.app.state, "engine", None)
-    flights = _load_flights()
+    flights = list(engine.schedule.values()) if engine else _load_flights()
+    aircraft = engine.aircraft if engine else {a["id"]: a for a in cache.get_aircraft()}
     flight_states: dict = engine.state.flight_states if engine else {}
 
     disrupted = {
@@ -622,42 +651,94 @@ async def rebooking_options(request: Request):
 
     rebooking: list[dict] = []
     for fid, fstate in disrupted.items():
-        orig_flight = flights_by_id.get(fid, {})
+        orig_flight = flights_by_id.get(fid)
+        if orig_flight is None:
+            continue
         origin = fstate.get("origin") or orig_flight.get("origin", "")
         destination = fstate.get("destination") or orig_flight.get("destination", "")
         orig_dep = orig_flight.get("scheduled_departure", "")
 
         # Find next 2 Nimbus Air flights on same city-pair
         alternatives = []
+        try:
+            orig_dt = datetime.fromisoformat(orig_dep.replace("Z", "+00:00"))
+            if orig_dt.utcoffset() is None:
+                raise ValueError("Missing timezone")
+        except (ValueError, AttributeError, TypeError):
+            rebooking.append(
+                {
+                    "disrupted_flight_id": fid,
+                    "origin": origin,
+                    "destination": destination,
+                    "original_departure": orig_dep,
+                    "alternatives": [],
+                    "has_options": False,
+                    "reason": "invalid_original_departure",
+                }
+            )
+            continue
         for f in flights:
             if f["id"] == fid:
                 continue
             if f.get("origin") != origin or f.get("destination") != destination:
                 continue
-            if f.get("status") == "cancelled":
+            state = flight_states.get(f["id"], {})
+            if state.get("status", f.get("status")) == "cancelled":
                 continue
             # Only suggest flights after the original scheduled departure
             try:
-                orig_dt = datetime.fromisoformat(orig_dep.replace("Z", "+00:00"))
-                f_dt = datetime.fromisoformat(f["scheduled_departure"].replace("Z", "+00:00"))
-                if f_dt <= orig_dt:
+                departure = state.get("new_departure") or f["scheduled_departure"]
+                arrival = state.get("new_arrival") or f["scheduled_arrival"]
+                f_dt = datetime.fromisoformat(departure.replace("Z", "+00:00"))
+                arrival_dt = datetime.fromisoformat(arrival.replace("Z", "+00:00"))
+                if state.get("new_departure") and not state.get("new_arrival"):
+                    scheduled_dep = datetime.fromisoformat(
+                        f["scheduled_departure"].replace("Z", "+00:00")
+                    )
+                    arrival_dt += f_dt - scheduled_dep
+                    arrival = arrival_dt.isoformat()
+                if (
+                    f_dt.utcoffset() is None
+                    or arrival_dt.utcoffset() is None
+                    or f_dt <= orig_dt
+                    or arrival_dt <= f_dt
+                ):
                     continue
                 delta_h = round((f_dt - orig_dt).total_seconds() / 3600, 1)
-            except (ValueError, AttributeError):
-                delta_h = 0.0
+            except (ValueError, AttributeError, TypeError, KeyError):
+                continue
+
+            tail_id = state.get("aircraft_id") or f.get("aircraft_id", "")
+            capacity = aircraft.get(tail_id, {}).get("seats")
+            booked = f.get("passengers")
+            seats = (
+                max(0, capacity - booked)
+                if isinstance(capacity, int)
+                and isinstance(booked, int)
+                and capacity >= 0
+                and booked >= 0
+                else None
+            )
+            if seats == 0:
+                continue
 
             alternatives.append(
                 {
                     "flight_id": f["id"],
-                    "departure": f["scheduled_departure"],
-                    "arrival": f["scheduled_arrival"],
-                    "aircraft_id": f.get("aircraft_id", ""),
-                    "seats_avail": max(0, f.get("passengers", 150) - 120),  # rough available seats
+                    "departure": departure,
+                    "arrival": arrival,
+                    "aircraft_id": tail_id,
+                    "seats_avail": seats,
+                    "availability_basis": "scenario_capacity_minus_bookings"
+                    if seats is not None
+                    else "unknown",
                     "delay_vs_original_hrs": delta_h,
                 }
             )
-            if len(alternatives) >= 2:
-                break
+        alternatives.sort(
+            key=lambda option: datetime.fromisoformat(option["departure"].replace("Z", "+00:00"))
+        )
+        alternatives = alternatives[:2]
 
         rebooking.append(
             {
@@ -670,7 +751,12 @@ async def rebooking_options(request: Request):
             }
         )
 
-    return {"disrupted_count": len(rebooking), "rebooking_options": rebooking}
+    return {
+        "estimate_only": True,
+        "availability_basis": "scenario_schedule_not_live_booking_inventory",
+        "disrupted_count": len(rebooking),
+        "rebooking_options": rebooking,
+    }
 
 
 @router.get("/passengers/compensation-policy")
@@ -678,37 +764,40 @@ async def compensation_policy():
     """Airline compensation policy: fault-based classification and obligations."""
     return {
         "airline": "Nimbus Air",
-        "policy_version": "2024-A",
-        "legal_framework": "14 CFR Part 250 / DOT Order 2024-1",
+        "policy_version": "scenario-2026-09-20",
+        "estimate_only": True,
+        "legal_entitlement_evaluated": False,
+        "legal_framework": "Illustrative airline policy; not a regulatory compliance model",
         "fault_classification": {
             "airline_fault_events": sorted(AIRLINE_FAULT_EVENTS),
-            "force_majeure_events": sorted(
-                {
-                    "weather_closure",
-                    "ground_stop",
-                    "airspace_closure",
-                    "security_event",
-                    "volcanic_ash",
-                    "atc_staffing",
-                    "runway_closure",
-                }
+            "modeled_airline_fault_events": sorted(
+                kind for kind in EVENT_DEFAULTS if _is_airline_fault(kind)
             ),
+            "modeled_external_events": sorted(
+                kind for kind in EVENT_DEFAULTS if _is_airline_fault(kind) is False
+            ),
+            "force_majeure_events": sorted(
+                kind for kind in EVENT_DEFAULTS if _is_airline_fault(kind) is False
+            ),
+            "deprecated_aliases": {"force_majeure_events": "modeled_external_events"},
+            "unknown_kind_behavior": "unknown_not_force_majeure",
         },
         "airline_fault_obligations": {
             "2h_delay": {
-                "required": True,
+                "required": False,
                 "action": "Meal voucher $15/person",
-                "basis": "DOT Enforcement Policy / Airline Customer Service Plan",
+                "basis": "Modeled airline goodwill policy",
             },
             "4h_delay": {
-                "required": True,
+                "required": False,
+                "hotel_allowance_usd_per_passenger": 150,
                 "action": "Hotel accommodation + $30 ground transport per person",
-                "basis": "DOT Enforcement Policy",
+                "basis": "Modeled airline goodwill policy",
             },
             "cancellation": {
-                "required": True,
-                "action": "Choice: (A) involuntary denied boarding cash — 400% one-way fare max $1,550; OR (B) full refund + $200 travel credit",
-                "basis": "14 CFR §250.5 / DOT Order 2024-1",
+                "required": False,
+                "action": "Modeled goodwill allowance and travel credit; evaluate refund rights separately",
+                "basis": "Scenario allowance, not denied-boarding compensation",
             },
         },
         "force_majeure_goodwill": {
@@ -716,12 +805,10 @@ async def compensation_policy():
             "actions": [
                 "Rebook on next available Nimbus Air flight — no change fee",
                 "Meal voucher $10/person if gate delay exceeds 3 hours (goodwill)",
-                "Hotel arranged if overnight stay required due to last-flight-of-day cancellation (goodwill)",
+                "Overnight hotel needs require separate assessment; no automatic allowance is modeled here",
             ],
-            "not_required": [
-                "Cash compensation for delays",
-                "Compensation beyond rebooking for weather / ATC / airspace events",
-            ],
+            "not_required": [],
+            "note": "Statutory entitlements and actual carrier commitments are not evaluated.",
         },
         "passenger_rights_link": "https://www.transportation.gov/airconsumer/fly-rights",
     }

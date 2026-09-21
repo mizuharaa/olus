@@ -1,0 +1,176 @@
+{
+    "metrics": {
+        "http_reqs": {
+            "count": 460,
+            "rate": 10.370054609722036
+        },
+        "http_req_duration{expected_response:true}": {
+            "avg": 30.413505228758154,
+            "med": 8.6275,
+            "p(95)": 180.0222,
+            "p(99)": 211.33447000000035,
+            "min": 4.5407,
+            "max": 252.771
+        },
+        "vus": {
+            "value": 1,
+            "min": 0,
+            "max": 2
+        },
+        "http_req_connecting": {
+            "p(99)": 0,
+            "min": 0,
+            "max": 3.3107,
+            "avg": 0.013399347826086958,
+            "med": 0,
+            "p(95)": 0
+        },
+        "http_req_receiving": {
+            "min": 0,
+            "max": 15.5573,
+            "avg": 0.6328784782608698,
+            "med": 0.5059,
+            "p(95)": 2.1649299999999982,
+            "p(99)": 4.499895999999999
+        },
+        "http_req_tls_handshaking": {
+            "p(99)": 0,
+            "min": 0,
+            "max": 0,
+            "avg": 0,
+            "med": 0,
+            "p(95)": 0
+        },
+        "workflow_success": {
+            "fails": 1,
+            "passes": 29,
+            "thresholds": {
+                "rate==1": true
+            },
+            "value": 0.9666666666666667
+        },
+        "http_req_blocked": {
+            "avg": 0.015834565217391305,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0,
+            "min": 0,
+            "max": 3.3107
+        },
+        "job_admission_rejections": {
+            "count": 1,
+            "rate": 0.0225435969776566
+        },
+        "iterations": {
+            "count": 30,
+            "rate": 0.676307909329698
+        },
+        "checks": {
+            "passes": 87,
+            "fails": 0,
+            "value": 1
+        },
+        "http_req_waiting": {
+            "med": 8.212150000000001,
+            "p(95)": 179.00924999999998,
+            "p(99)": 209.71515399999925,
+            "min": 4.5407,
+            "max": 252.771,
+            "avg": 30.09218260869564
+        },
+        "solver_completion_ms": {
+            "min": 1698,
+            "max": 1967,
+            "avg": 1801.2758620689656,
+            "med": 1810,
+            "p(95)": 1942.8,
+            "p(99)": 1960.56
+        },
+        "http_req_failed": {
+            "fails": 459,
+            "passes": 1,
+            "thresholds": {
+                "rate==0": true
+            },
+            "value": 0.002173913043478261
+        },
+        "http_req_duration": {
+            "min": 4.5407,
+            "max": 252.771,
+            "avg": 30.737329130434773,
+            "med": 8.6394,
+            "p(95)": 179.99194999999997,
+            "p(99)": 211.11938499999934
+        },
+        "vus_max": {
+            "value": 2,
+            "min": 2,
+            "max": 2
+        },
+        "http_req_sending": {
+            "min": 0,
+            "max": 0.8792,
+            "avg": 0.01226804347826087,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0.5279189999999995
+        },
+        "data_sent": {
+            "count": 89616,
+            "rate": 2020.2669867496738
+        },
+        "iteration_duration": {
+            "avg": 2747.7608299999997,
+            "med": 2808.1980000000003,
+            "p(95)": 2943.403445,
+            "p(99)": 2961.232316,
+            "min": 1183.4073,
+            "max": 2968.0646
+        },
+        "job_acceptance_ms": {
+            "avg": 190.38664,
+            "med": 184.60105,
+            "p(95)": 232.952125,
+            "p(99)": 247.92365,
+            "min": 161.6904,
+            "max": 252.771
+        },
+        "data_received": {
+            "count": 5429711,
+            "rate": 122405.21648914879
+        }
+    },
+    "setup_data": {
+        "parent": "a8cdfd11-ae68-41e6-a928-328b4e437c00",
+        "parentHash": "9a29f0b52fd5ae2bc1169b81a0be409c3d79c087fe40ebd2d3986da73e573667"
+    },
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "completed with four feasible validated strategies": {
+                    "fails": 0,
+                    "name": "completed with four feasible validated strategies",
+                    "path": "::completed with four feasible validated strategies",
+                    "id": "3617abcd01e4a66ca7ffdcc19d543245",
+                    "passes": 29
+                },
+                "dispatcher delay floor preserved": {
+                    "name": "dispatcher delay floor preserved",
+                    "path": "::dispatcher delay floor preserved",
+                    "id": "ac6081bbf54f16ac727066de25bad0f2",
+                    "passes": 29,
+                    "fails": 0
+                },
+                "parent lineage preserved": {
+                    "path": "::parent lineage preserved",
+                    "id": "af7cad1b96e10e15771268540871acbb",
+                    "passes": 29,
+                    "fails": 0,
+                    "name": "parent lineage preserved"
+                }
+            }
+    }
+}

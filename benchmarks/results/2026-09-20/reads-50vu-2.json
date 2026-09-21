@@ -1,0 +1,204 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "network 200": {
+                    "fails": 0,
+                    "name": "network 200",
+                    "path": "::network 200",
+                    "id": "1630b5a191d223484e7798253e844a5e",
+                    "passes": 1411
+                },
+                "schedule 200": {
+                    "name": "schedule 200",
+                    "path": "::schedule 200",
+                    "id": "9b096765d21300dbf7453f193b8d1c6d",
+                    "passes": 1411,
+                    "fails": 0
+                },
+                "simulator_state 200": {
+                    "passes": 1411,
+                    "fails": 0,
+                    "name": "simulator_state 200",
+                    "path": "::simulator_state 200",
+                    "id": "fc00437d9ab7666df93abaa98655d630"
+                },
+                "events_types 200": {
+                    "id": "0ab983ef102d904a82ad10cdc348e5a8",
+                    "passes": 1411,
+                    "fails": 0,
+                    "name": "events_types 200",
+                    "path": "::events_types 200"
+                },
+                "airports 200": {
+                    "name": "airports 200",
+                    "path": "::airports 200",
+                    "id": "f265d5424ed2eb256f91e0c3e2c25dfc",
+                    "passes": 1411,
+                    "fails": 0
+                },
+                "aircraft 200": {
+                    "path": "::aircraft 200",
+                    "id": "ee7d825fb2cfc0c701cea029c62f4adc",
+                    "passes": 1411,
+                    "fails": 0,
+                    "name": "aircraft 200"
+                },
+                "crews 200": {
+                    "path": "::crews 200",
+                    "id": "c5fad48735c2224c6c99910c1711339f",
+                    "passes": 1411,
+                    "fails": 0,
+                    "name": "crews 200"
+                },
+                "recovery_plans 200": {
+                    "name": "recovery_plans 200",
+                    "path": "::recovery_plans 200",
+                    "id": "e06abaf6131f213cc76987bde419d6b3",
+                    "passes": 1411,
+                    "fails": 0
+                }
+            }
+    },
+    "metrics": {
+        "http_req_blocked": {
+            "avg": 0.02903059886605247,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0.5384129999999999,
+            "min": 0,
+            "max": 8.9496
+        },
+        "failed_requests": {
+            "passes": 0,
+            "fails": 11288,
+            "value": 0
+        },
+        "iteration_duration": {
+            "avg": 2143.289501700924,
+            "med": 2188.6869,
+            "p(95)": 2466.9255000000003,
+            "p(99)": 2968.1393500000045,
+            "min": 1129.6461,
+            "max": 3701.0214
+        },
+        "checks": {
+            "passes": 11288,
+            "fails": 0,
+            "thresholds": {
+                "rate==1": false
+            },
+            "value": 1
+        },
+        "schedule_duration": {
+            "avg": 235.42727958894375,
+            "med": 237.3034,
+            "p(95)": 360.2934,
+            "p(99)": 397.5308100000007,
+            "min": 12.2241,
+            "max": 517.1486
+        },
+        "http_req_tls_handshaking": {
+            "p(99)": 0,
+            "min": 0,
+            "max": 0,
+            "avg": 0,
+            "med": 0,
+            "p(95)": 0
+        },
+        "http_req_waiting": {
+            "p(99)": 468.04791699999976,
+            "min": 0.5425,
+            "max": 1885.3619,
+            "avg": 156.32362346739833,
+            "med": 143.3203,
+            "p(95)": 331.66227499999997
+        },
+        "http_req_receiving": {
+            "max": 554.5202,
+            "avg": 48.77827197909306,
+            "med": 21.256149999999998,
+            "p(95)": 194.92663499999995,
+            "p(99)": 311.72529399999985,
+            "min": 0
+        },
+        "data_sent": {
+            "count": 989111,
+            "rate": 16211.229097349347
+        },
+        "http_req_failed": {
+            "passes": 0,
+            "fails": 11288,
+            "thresholds": {
+                "rate==0": false
+            },
+            "value": 0
+        },
+        "network_duration": {
+            "max": 1948.641,
+            "avg": 147.35138568391213,
+            "med": 109.5406,
+            "p(95)": 285.34235,
+            "p(99)": 1119.0448000000035,
+            "min": 3.7118
+        },
+        "http_req_duration": {
+            "min": 1.3899,
+            "max": 1948.641,
+            "avg": 205.12736523742117,
+            "med": 196.2836,
+            "p(95)": 398.0714149999998,
+            "p(99)": 519.8238189999996
+        },
+        "http_req_duration{expected_response:true}": {
+            "p(95)": 398.0714149999998,
+            "p(99)": 519.8238189999996,
+            "min": 1.3899,
+            "max": 1948.641,
+            "avg": 205.12736523742117,
+            "med": 196.2836
+        },
+        "vus": {
+            "value": 17,
+            "min": 17,
+            "max": 50
+        },
+        "http_req_connecting": {
+            "min": 0,
+            "max": 8.4229,
+            "avg": 0.01924987597448618,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0
+        },
+        "http_reqs": {
+            "rate": 185.0068941209626,
+            "count": 11288
+        },
+        "iterations": {
+            "rate": 23.125861765120327,
+            "count": 1411
+        },
+        "data_received": {
+            "rate": 5306205.856145093,
+            "count": 323752539
+        },
+        "http_req_sending": {
+            "max": 4.5201,
+            "avg": 0.025469790928419604,
+            "med": 0,
+            "p(95)": 0,
+            "p(99)": 0.6578549999999972,
+            "min": 0
+        },
+        "vus_max": {
+            "value": 50,
+            "min": 50,
+            "max": 50
+        }
+    },
+    "setup_data": {}
+}

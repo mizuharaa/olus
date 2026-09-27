@@ -13,7 +13,9 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://olus.sh"),
   title: "Olus — Airline disruption recovery",
   description: "Real-time aircraft disruption simulation and recovery engine.",
+  icons: { icon: [{ url: "/brand/olus-32.png", sizes: "32x32" }, { url: "/brand/olus-48.png", sizes: "48x48" }] },
   openGraph: {
+    images: [{ url: "/brand/olus-og.png", width: 1200, height: 630, alt: "Olus airline disruption recovery" }],
     title: "Olus — Airline disruption recovery",
     description: "Real-time aircraft disruption simulation and recovery engine.",
   },
@@ -104,39 +106,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           one fewer blocking stylesheet on first paint.
         */}
         <link
-          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap"
+          href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
       <body suppressHydrationWarning className="min-h-screen">
-        {/* The direction contract, emitted as a real HTML comment so it survives
-            the production build and can be grepped out of the built output.
-            React cannot render a bare comment node, hence the zero-size host. */}
-        <div
-          aria-hidden
-          style={{ display: "none" }}
-          dangerouslySetInnerHTML={{
-            __html: `<!-- OLUS CONSOLE · DIRECTION CONTRACT · seed 688f3053
-THESIS: A dispatcher's screen is a board that holds the whole network at once. Density is the
-  feature. Refuses the SaaS arrangement — four stat cards, one chart, a table — that spends a
-  1440px screen on whitespace while the flight that is on fire sits below the fold.
-OWN-WORLD: Bright white ground, ink #14161A. Hairline-ruled modules packed edge to edge, each
-  headed by a small tab. Compact gothic at 11-13px, tabular numerals. Colour only as a narrow
-  spectral fringe on module edges (mint/rose/violet); the text field stays achromatic.
-  Elevation is a cut face, never a drop shadow. State is a mark, never a hue.
-STORY: The operator sees what broke, how far it will spread, what the four plans trade against
-  each other, and commits one — without leaving the board.
-FIRST VIEWPORT: 44px bar (OLUS as plain type, live on-time/cancelled counts, register switch,
-  Ask Olus). Below: 56px rail, a 360px context column of tabbed modules, the map taking the
-  whole remaining field, and the cascade as a scrub rail beneath it that snaps to time pitch.
-FORM: Hairline Mosaic — dealt challenger (japanese-high-density-web), beat assigned candidate 7
-  (Departure Board) on audience identification and product clarity. Raised by Iridescent Cloud
-  Edge, Cutting Bench Rail, Yé-yé Sleeve, Cloud Quarry, Cracktro Queue.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the
-  verdict, and DESIGN.md
--->`,
-          }}
-        />
         <Providers>
           {children}
           <CookieConsent />

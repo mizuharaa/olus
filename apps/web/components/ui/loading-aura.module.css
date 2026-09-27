@@ -1,0 +1,6 @@
+.aura { position:absolute; width:240px; height:240px; pointer-events:none; inset:50% auto auto 50%; transform:translate(-50%,-50%); transition:opacity .2s; }
+.outer,.inner { transform-origin:120px 120px; }
+.outer { animation:flow 7.3s ease-in-out infinite alternate; }
+.inner { animation:flow 11.1s ease-in-out infinite alternate-reverse; }
+@keyframes flow { 0% { transform:rotate(-25deg) scale(.93,1.03); } 43% { transform:rotate(120deg) scale(1.06,.94); } 100% { transform:rotate(310deg) scale(.97,1.05); } }
+@media(prefers-reduced-motion:reduce) { .aura { display:none; } .outer,.inner { animation:none; } }

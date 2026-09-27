@@ -19,7 +19,7 @@ class PredictRequest(BaseModel):
 
 
 @router.post("/predict/cascade")
-async def predict_cascade(payload: PredictRequest, request: Request):
+def predict_cascade(payload: PredictRequest, request: Request):
     """Predict cascade delay effects from a disruption event."""
     predictor = request.app.state.predictor
     weather = request.app.state.weather

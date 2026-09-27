@@ -1,16 +1,7 @@
-/**
- * OlusMark — the Olus brand mark.
- *
- * Olus is the keeper of the winds, so the mark is three wind strokes:
- * clean tapering lines that curl forward like streamlines over a wing.
- * Monochrome, drawn in currentColor (set `style={{ color }}` to re-ink),
- * no gradients, no badge tile, no gloss — it prints like type.
- *
- * `OlusLogo` keeps the historical name/props so no call site churns;
- * legacy `ink` / `accent` / `radius` props are accepted for compatibility.
- */
-
+/** Shared Olus O-loop. Legacy props remain compatible with existing callers. */
 import type { CSSProperties } from "react"
+
+export const OLUS_MARK_PATH = "M5 23C8 12 17 5 26 7C35 9 31 20 22 26C13 32 3 27 5 23ZM9 22C10 26 16 27 22 23C28 19 31 12 25 11C19 9 12 15 9 22Z"
 
 export function OlusMark({
   size = 34,
@@ -34,18 +25,8 @@ export function OlusMark({
       role="img"
       style={{ display: "inline-flex", flexShrink: 0, width: size, height: size, ...style }}
     >
-      <svg viewBox="0 0 40 40" width="100%" height="100%" style={{ display: "block" }}>
-        <g
-          fill="none"
-          stroke="currentColor"
-          strokeLinecap="round"
-          strokeWidth="3.2"
-        >
-          {/* three streamlines, each ending in a forward curl */}
-          <path d="M6 13 H26 a4.5 4.5 0 1 0 -4.5 -4.5" />
-          <path d="M6 20.5 H31 a4 4 0 1 1 -4 4" />
-          <path d="M6 28 H21 a3.5 3.5 0 1 0 -3.5 3.5" opacity="0.55" />
-        </g>
+      <svg viewBox="0 0 36 36" width="100%" height="100%" style={{ display: "block" }}>
+        <path d={OLUS_MARK_PATH} fill="currentColor" />
       </svg>
     </span>
   )

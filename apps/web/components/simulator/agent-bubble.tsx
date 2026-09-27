@@ -13,14 +13,13 @@
  */
 
 import { useEffect, useRef, useState } from "react"
-import { AnimatePresence, motion } from "framer-motion"
 import { CornerDownLeft, X } from "lucide-react"
 import { OlusMark } from "@/components/ds/logo"
 import { apiClient } from "@/lib/api"
 
-const INK = "#1A1622"
-const BONE = "#F0EBDF"
-const AMBER = "#B8863C"
+const INK = "#183136"
+const BONE = "#F7F5F1"
+const AMBER = "#ADC8BE"
 
 const EXAMPLES = [
   "What's the state of the network right now?",
@@ -37,14 +36,15 @@ export function AgentBubble() {
   const [busy, setBusy] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const panelRef = useRef<HTMLDialogElement>(null)
 
   // keep the newest message in view
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" })
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth" })
   }, [msgs, busy])
 
   useEffect(() => {
-    if (open) inputRef.current?.focus()
+    if (open) { panelRef.current?.showModal(); inputRef.current?.focus() }
   }, [open])
 
   const ask = async (q: string) => {
@@ -74,23 +74,22 @@ export function AgentBubble() {
     // allocates all of its height to tracks, so the nav is the only region with
     // free space — which is also where a global tool belongs.
     <div style={{ position: "relative", zIndex: 46 }}>
-      <AnimatePresence>
         {open && (
-          <motion.div
-            key="panel"
-            initial={{ opacity: 0, y: 14, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 14, scale: 0.98 }}
-            transition={{ duration: 0.28, ease: [0.22, 0.9, 0.28, 1] }}
+          <dialog
+            ref={panelRef}
+            aria-label="Olus copilot"
+            onClose={() => setOpen(false)}
             style={{
-              position: "absolute",
-              top: "calc(100% + 10px)",
-              right: 0,
+              position: "fixed",
+              inset: "auto 20px 48px auto",
+              margin: 0,
+              padding: 0,
+              maxHeight: "calc(100dvh - 80px)",
               width: "min(390px, calc(100vw - 40px))",
               borderRadius: 14,
               background: INK,
               color: BONE,
-              border: "1px solid rgba(240,235,223,0.14)",
+              border: 0,
               boxShadow: "0 24px 64px rgba(10,6,26,0.4)",
               overflow: "hidden",
               display: "flex",
@@ -109,14 +108,14 @@ export function AgentBubble() {
               }}
             >
               <OlusMark size={17} style={{ color: BONE }} accent={AMBER} />
-              <span style={{ fontFamily: "var(--ae-font-display)", fontWeight: 650, fontSize: 13.5 }}>
+              <span style={{ fontFamily: "var(--ae-font-display)", fontWeight: 650, fontSize: 16 }}>
                 Olus copilot
               </span>
               <span
                 style={{
                   marginLeft: "auto",
-                  fontFamily: "var(--ae-font-mono)",
-                  fontSize: 9.5,
+                  fontFamily: "var(--ae-font-body)",
+                  fontSize: 12,
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
                   color: "rgba(240,235,223,0.55)",
@@ -125,9 +124,9 @@ export function AgentBubble() {
                 Grounded · live state
               </span>
               <button
-                onClick={() => setOpen(false)}
+                onClick={() => panelRef.current?.close()}
                 aria-label="Close copilot panel"
-                style={{ background: "none", border: "none", color: BONE, cursor: "pointer", display: "inline-flex", padding: 2 }}
+                style={{ background: "none", border: "none", color: BONE, cursor: "pointer", display: "inline-flex", padding: 2, minHeight: 44, minWidth: 44 }}
               >
                 <X style={{ width: 14, height: 14 }} strokeWidth={2} />
               </button>
@@ -159,8 +158,8 @@ export function AgentBubble() {
                       type="button"
                       onClick={() => ask(e)}
                       style={{
-                        fontFamily: "var(--ae-font-mono)",
-                        fontSize: 11.5,
+                        fontFamily: "var(--ae-font-body)",
+                        fontSize: 14,
                         lineHeight: 1.45,
                         padding: "8px 10px",
                         borderRadius: 8,
@@ -190,7 +189,7 @@ export function AgentBubble() {
                     borderRadius: m.role === "user" ? "11px 11px 3px 11px" : "11px 11px 11px 3px",
                     background: m.role === "user" ? "rgba(240,235,223,0.12)" : "rgba(240,235,223,0.05)",
                     border: `1px solid ${m.error ? "rgba(193,58,107,0.5)" : "rgba(240,235,223,0.10)"}`,
-                    fontSize: 12.5,
+                    fontSize: 14,
                     lineHeight: 1.55,
                     whiteSpace: "pre-wrap",
                     color: m.error ? "#E8A2BC" : BONE,
@@ -209,7 +208,7 @@ export function AgentBubble() {
                     borderRadius: "11px 11px 11px 3px",
                     background: "rgba(240,235,223,0.05)",
                     border: "1px solid rgba(240,235,223,0.10)",
-                    fontFamily: "var(--ae-font-mono)",
+                    fontFamily: "var(--ae-font-body)",
                     fontSize: 11,
                     color: "rgba(240,235,223,0.6)",
                   }}
@@ -243,10 +242,11 @@ export function AgentBubble() {
                   aria-label="Ask the Olus copilot"
                   style={{
                     flex: 1,
+                    minWidth: 0,
                     background: "none",
                     border: "none",
                     outline: "none",
-                    fontSize: 12.5,
+                    fontSize: 14,
                     color: BONE,
                     fontFamily: "var(--ae-font-body)",
                     opacity: busy ? 0.6 : 1,
@@ -271,9 +271,8 @@ export function AgentBubble() {
               .ab-dots::after { content: "…"; animation: ab-blink 1.2s steps(4) infinite; }
               @keyframes ab-blink { 0% { opacity: 0.2; } 50% { opacity: 1; } 100% { opacity: 0.2; } }
             `}</style>
-          </motion.div>
+          </dialog>
         )}
-      </AnimatePresence>
 
       {/* An ink-filled pill with the cyclone mark inside it made this the
           heaviest object on a 44px bar — visual weight follows CONSEQUENCE
@@ -283,7 +282,7 @@ export function AgentBubble() {
           with the rest of the OlusMark removals. A sparkle glyph would just
           be the same mistake in a different costume, so the affordance is the
           word. */}
-      <motion.button
+      <button
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className="ae-bar-btn"
@@ -305,7 +304,7 @@ export function AgentBubble() {
         }}
       >
         Ask Olus
-      </motion.button>
+      </button>
     </div>
   )
 }

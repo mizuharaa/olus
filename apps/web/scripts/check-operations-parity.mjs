@@ -1,0 +1,34 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+const browser=await chromium.launch({channel:'msedge',headless:true});
+try {
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.addInitScript(()=>localStorage.setItem('olus-cookie-consent','essential'));
+ await page.goto('http://localhost:3001/scenarios');
+ await page.getByRole('button',{name:/Run scenario/}).first().click();
+ await page.waitForURL('**/app/overview');
+ await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(n=>/^Events\s+[1-9]/.test(n.textContent)));
+ await page.getByRole('button',{name:/^Recovery /}).click();
+ const handle=page.getByRole('separator',{name:/Recovery height/});await handle.focus();const before=Number(await handle.getAttribute('aria-valuenow'));await page.keyboard.press('ArrowUp');assert.equal(Number(await handle.getAttribute('aria-valuenow')),before+16);
+ await page.getByRole('button',{name:'Cost and risk detail',exact:true}).click();
+ await page.getByLabel('Detail plan',{exact:true}).selectOption('D');
+ await page.getByRole('button',{name:'Commit plan D',exact:true}).waitFor();
+ await page.getByText('Total exposure',{exact:true}).waitFor();
+ await page.getByRole('button',{name:'Close recovery',exact:true}).click();
+ await page.getByRole('button',{name:/^Open cascade timeline/}).click();
+ const row=page.locator('.cascade-timeline-scroll [role=button]').first();await row.focus();await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelector('.cascade-timeline-scroll [role=button]')?.getAttribute('aria-pressed')==='true');
+ await page.keyboard.press('ArrowDown');assert.equal(await page.locator('.cascade-timeline-scroll [role=button]').nth(1).evaluate(n=>n===document.activeElement),true);
+ await page.getByRole('button',{name:/^Collapse cascade timeline/}).click();
+ const search=page.getByLabel('Search flights by number, tail or airport code');await search.fill('DEN');
+ await page.locator('button').filter({hasText:/KDEN|DEN \(/}).first().waitFor();
+ await page.keyboard.press('Escape');await page.getByRole('button',{name:/^Events /}).click();
+ const height=await page.getByText('Weather Closure',{exact:true}).first().evaluate(n=>n.closest('[cmdk-item]').getBoundingClientRect().height);assert.ok(height>=44,`row ${height}`);
+ const panel=page.getByRole('complementary',{name:'Disruption controls'});
+ assert.equal(await panel.evaluate(el=>getComputedStyle(el).borderRadius),'8px');
+ assert.equal(await panel.evaluate(el=>getComputedStyle(el).boxShadow),'none');
+ assert.equal(await panel.evaluate(el=>getComputedStyle(el).overflow),'hidden');
+ assert.equal(await page.getByRole('tab',{name:'Trigger',exact:true}).evaluate(el=>getComputedStyle(el).boxShadow),'none');
+ await page.screenshot({path:'../../docs/verification/floating-tools-applied.png'});
+ await page.reload();await page.waitForFunction(()=>[...document.querySelectorAll('button')].some(n=>/^Events\s+0/.test(n.textContent)));
+ assert.deepEqual(errors,[]);console.log('PASS scenario handoff, plan detail D, cascade keyboard, airport search, comfortable row >=44px, reload reset');
+} finally {await browser.close()}

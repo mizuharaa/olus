@@ -121,6 +121,7 @@ Pipfile.lock
 
 # poetry
 poetry.lock
+!apps/api/poetry.lock
 
 # pdm
 .pdm.toml
@@ -149,7 +150,7 @@ mlartifacts/
 wandb/
 .neptune/
 outputs/
-runs/
+/runs/
 
 # -----------------------------------------------------------------------------
 # Node.js / JavaScript / TypeScript
@@ -318,6 +319,7 @@ tramp
 **/.terraform/
 **/.terraform.lock.hcl
 !infra/terraform/.terraform.lock.hcl
+!infra/aws/.terraform.lock.hcl
 *.tfstate
 *.tfstate.*
 *.tfvars
@@ -415,3 +417,8 @@ apps/web/shots/
 
 .vercel
 .env*
+!.env.example
+
+# Isolated browser integration build
+apps/web/.next-account-check/
+apps/web/.next-scenario-check/

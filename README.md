@@ -297,8 +297,8 @@ state snapshot).
 | Component | Technology |
 |---|---|
 | Containerisation | Docker + Docker Compose (api + web) |
-| Deployment | Docker images; the API binds the platform-provided `$PORT` and is deployed on Railway |
-| Prod IaC (reference) | Terraform (`infra/terraform/`) |
+| Deployment | Vercel website; API container on AWS EC2 behind CloudFront |
+| Prod IaC | Terraform (`infra/aws/`); `infra/terraform/` is the retired ECS reference |
 
 ---
 

@@ -7,18 +7,12 @@
  * Airtable editorial canvas. Pages provide their own breadcrumb / title row
  * so each surface keeps a clear identity inside the consistent shell.
  */
-import { useEffect } from "react"
 import Link from "next/link"
 import type { Route } from "next"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { useSimulationStore, type ScheduledFlight, type FleetAircraft } from "@/stores/simulation"
-import { useWebSocket } from "@/lib/websocket"
 // BoardBar, not SimulatorNav: every /simulator route wears the same 44px bar
 // after the 2026-08-17 rebuild, so a secondary route cannot drift back to the
 // old 56px chrome and split the app into two design languages.
-import { BoardBar } from "@/components/simulator/top-bar"
-import { apiClient } from "@/lib/api"
-import { hydrateAirportTiers } from "@/components/simulator/airports"
 import { c, ff, r, sp } from "@/lib/design-tokens"
 import { Type, Container } from "@/components/ds/primitives"
 
@@ -37,60 +31,9 @@ export function SimulatorPageShell({
   children: React.ReactNode
   maxWidth?: number
 }) {
-  const { setSchedule, setFleet, setUpdate } = useSimulationStore()
-  const { isConnected } = useWebSocket()
-
-  /**
-   * DEEP-LINK HYDRATION.
-   *
-   * This effect existed to load schedule + fleet + airports so the shared nav
-   * renders correctly for someone who lands on a secondary route without
-   * visiting the console first. It never loaded the DISRUPTION state, and the
-   * secondary routes read that from the store — which only the WebSocket fills.
-   *
-   * The consequence, found 2026-08-17: open /simulator/plans directly during a
-   * live disruption with four solved plans and the page renders "No recovery
-   * plans yet. Trigger a disruption…". Not a slow load — a confident, wrong
-   * answer, on a route whose entire job is showing those plans. Any WebSocket
-   * that is slow, blocked by a proxy, or simply still handshaking produces it.
-   *
-   * `/simulator/state` returns active events, recovery plans, flight states and
-   * the schedule in one call, and `setUpdate` already knows how to merge a
-   * snapshot — so the fix is one request, and the socket's own snapshot
-   * overwrites it a moment later through exactly the same path.
-   */
-  useEffect(() => {
-    apiClient
-      .get<Record<string, unknown>>("/simulator/state")
-      .then((res) => { if (res.data) setUpdate(res.data) })
-      .catch(() => {})
-  }, [setUpdate])
-
-  useEffect(() => {
-    apiClient
-      .get<{ flights?: ScheduledFlight[] } | ScheduledFlight[]>("/simulator/schedule")
-      .then((res) => {
-        const d = res.data
-        const list = Array.isArray(d) ? d : d?.flights
-        setSchedule(list ?? [])
-      })
-      .catch(() => {})
-    // "/aircraft", not "/network/aircraft" — see the note in app/simulator/page.tsx.
-    apiClient
-      .get<{ aircraft?: FleetAircraft[] }>("/aircraft")
-      .then((res) => setFleet(res.data?.aircraft ?? []))
-      .catch(() => {})
-    apiClient
-      .get<{ airports?: { id: string; hub_type?: string }[] }>("/airports")
-      .then((res) => hydrateAirportTiers(res.data?.airports))
-      .catch(() => {})
-  }, [setSchedule, setFleet])
-
+  // WorkspaceShell owns hydration and the simulation socket for every route.
   return (
     <div style={{ background: "var(--ae-bg)", minHeight: "100vh", fontFamily: ff.body }}>
-      <div style={{ position: "sticky", top: 0, zIndex: 50 }}>
-        <BoardBar isConnected={isConnected} />
-      </div>
 
       {/* ── Page header band — breadcrumbs + title + actions ─────────── */}
       <div

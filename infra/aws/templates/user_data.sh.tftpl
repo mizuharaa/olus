@@ -28,15 +28,10 @@ BACKUP_BUCKET=${backup_bucket}
 ENVFILE
 chmod 600 /opt/olus/.env
 
-# Nightly copy of the SQLite file. AL2023 ships the aws CLI; the instance role
+# Nightly SQLite snapshots. AL2023 ships the aws CLI; the instance role
 # grants PutObject on this bucket only.
 cat > /etc/cron.daily/olus-backup <<'BACKUP'
-#!/bin/sh
-set -e
-. /opt/olus/.env
-[ -f /opt/olus/state/olus.db ] || exit 0
-aws s3 cp /opt/olus/state/olus.db \
-  "s3://$BACKUP_BUCKET/state/olus-$(date +%F).db" --region "$AWS_REGION"
+${backup_script}
 BACKUP
 chmod +x /etc/cron.daily/olus-backup
 

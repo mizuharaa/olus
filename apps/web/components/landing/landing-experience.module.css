@@ -2113,7 +2113,7 @@
 .experience:global(.olus-landing) :global(.dm-section) { margin-top:0; background:var(--ink-900); }
 .experience:global(.olus-landing) :global(.dm-headline-title span) { color:var(--text-mid); }
 .experience:global(.olus-landing) :global(.olus-demo-controls) {
-  position:absolute; inset:96px 24px auto; z-index:6; display:flex; flex-wrap:wrap;
+  position:absolute; inset:auto 24px 24px; z-index:6; display:flex; flex-wrap:wrap;
   justify-content:center; align-items:center; gap:16px; color:var(--text-mid); font-size:13px;
 }
 .experience:global(.olus-landing) :global(.olus-demo-controls button),
@@ -2139,4 +2139,11 @@
 @media(max-width:639px), (prefers-reduced-motion:reduce) {
  .experience:global(.olus-landing) :global(.dm-headline) { padding-inline:24px; }
  .experience:global(.olus-landing) :global(.dm-headline-title) { font-size:clamp(32px,7vw,60px); }
+}
+
+.experience:global(.olus-landing) :global(.dm-captions-row) { bottom:96px; }
+
+@media(min-width:640px) {
+  :global(body:has([aria-label="Cookie preferences"])) .experience:global(.olus-landing) :global(.olus-demo-controls) { bottom:150px; }
+  :global(body:has([aria-label="Cookie preferences"])) .experience:global(.olus-landing) :global(.dm-captions-row) { bottom:220px; }
 }

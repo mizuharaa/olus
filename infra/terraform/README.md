@@ -1,5 +1,7 @@
 # Olus AWS deployment
 
+Retired ECS/ALB reference. The current deployment is documented in [infra/aws](../aws/README.md).
+
 This stack runs both Olus containers on one `t3a.small` ECS container
 instance behind an Application Load Balancer. It deliberately targets a
 $40–50/month portfolio budget instead of maximum availability.

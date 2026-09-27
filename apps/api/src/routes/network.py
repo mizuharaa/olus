@@ -116,7 +116,7 @@ class StressTestRequest(BaseModel):
 
 
 @router.post("/network/stress-test")
-async def post_stress_test(payload: StressTestRequest, request: Request):
+def post_stress_test(payload: StressTestRequest, request: Request):
     """
     Network vulnerability stress test — Slice 6.
 

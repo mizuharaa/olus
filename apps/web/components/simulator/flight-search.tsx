@@ -71,9 +71,10 @@ export function FlightSearch({ selectedFlight, onSelect }: Props) {
     if (!needle || needle.length < 2) return []
     return liveFlights
       .filter((f) =>
-        f.callsign.includes(needle) ||
+        (f.callsign ?? "").toUpperCase().includes(needle) ||
+        f.icao24.toUpperCase().includes(needle) ||
         (f.flight_iata ?? "").includes(needle) ||
-        f.flight_icao.includes(needle),
+        (f.flight_icao ?? "").toUpperCase().includes(needle),
       )
       .slice(0, 8)
   }, [q, liveFlights])
@@ -288,9 +289,9 @@ export function FlightSearch({ selectedFlight, onSelect }: Props) {
                           </div>
                         </div>
                       </button>
-                      {lf.tracking.flightaware && (
+                      {lf.tracking?.flightaware && (
                         <a
-                          href={lf.tracking.flightaware}
+                          href={lf.tracking?.flightaware}
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}

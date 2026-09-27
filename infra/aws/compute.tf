@@ -57,6 +57,7 @@ resource "aws_instance" "app" {
     region                 = var.aws_region
     ecr_registry           = "${data.aws_caller_identity.current.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
     backup_bucket          = aws_s3_bucket.backups.bucket
+    backup_script          = file("${path.module}/backup.sh")
     docker_compose_version = var.docker_compose_version
     compose_file = templatefile("${path.module}/templates/docker-compose.yml.tftpl", {
       api_image    = "${aws_ecr_repository.api.repository_url}:${var.image_tag}"
@@ -68,7 +69,7 @@ resource "aws_instance" "app" {
 
   # Deliberately NOT user_data_replace_on_change: replacing the instance throws
   # away /opt/olus/state and the SQLite scenario history with it. A user_data
-  # change lands on the next reboot, or run the compose pull by hand over SSM.
+  # script runs only on first boot; existing hosts receive backup updates via SSM.
 
   tags = { Name = "olus-app" }
 }

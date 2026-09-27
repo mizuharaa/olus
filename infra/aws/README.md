@@ -50,6 +50,18 @@ Stopped (`panic.ps1`): ~$5 — the volume and the EIP keep billing, compute does
 
 Shell on the box (no SSH key exists): `terraform output -raw ssm_session_command`.
 
+## Server-only copilot credential
+
+Store the Gemini credential as an SSM **SecureString** named
+`/olus/production/gemini-api-key` in the API region. Do not put it in Git,
+Vercel public variables, workflow arguments, or browser code.
+
+Each deployment runs `load-secrets.py` on the instance using its IAM role.
+It atomically writes `/opt/olus/api.env` with mode `0600`; Compose loads that
+file into the API container. A missing parameter preserves the existing file;
+access errors or invalid values stop the deployment before the container restarts.
+After changing the parameter, run **Deploy AWS** to reload it.
+
 ## The domain: api.olus.sh
 
 `olus.sh` is registered through Vercel (registrar Name.com), so DNS lives at

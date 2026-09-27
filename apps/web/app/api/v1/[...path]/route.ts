@@ -4,11 +4,8 @@
  * The browser always calls same-origin /api/v1/... — no CORS, no baked-in URL.
  * This route reads API_URL at request time rather than build time.
  *
- * Set API_URL to the FastAPI origin in the deployment environment. On AWS,
- * both containers share a task network and use http://127.0.0.1:8000.
- *
- * WebSocket still needs NEXT_PUBLIC_API_URL or NEXT_PUBLIC_WS_URL. The ECS
- * task supplies the latter at runtime through /api/ws-config.
+ * Vercel's API_URL points to the AWS API. WebSockets discover WS_URL/API_URL
+ * separately through /api/ws-config.
  */
 import { NextRequest, NextResponse } from "next/server"
 import { getBackendUrl } from "@/lib/backend-config"
@@ -24,6 +21,11 @@ function proxyTimeoutMs(): number {
 }
 
 async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
+  const unsafe = !["GET", "HEAD", "OPTIONS"].includes(req.method)
+  const origin = req.headers.get("origin")
+  if (unsafe && origin && origin !== req.nextUrl.origin) {
+    return NextResponse.json({ detail: "Cross-origin state changes are not allowed." }, { status: 403 })
+  }
   const backend = getBackendUrl()
   if (!backend) {
     return NextResponse.json(
@@ -38,10 +40,13 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
   const encodedPath = path.map((part) => encodeURIComponent(part)).join("/")
   const url = `${backend}/api/v1/${encodedPath}${req.nextUrl.search}`
 
-  const init: RequestInit = { method: req.method }
-
-  const ct = req.headers.get("content-type")
-  if (ct) init.headers = { "content-type": ct }
+  const headers = new Headers()
+  // The same-origin check above owns browser mutations, including preview hosts.
+  for (const name of ["content-type", "cookie", "authorization", "x-csrf-token"]) {
+    const value = req.headers.get(name)
+    if (value) headers.set(name, value)
+  }
+  const init: RequestInit = { method: req.method, headers, cache: "no-store" }
 
   if (req.method !== "GET" && req.method !== "HEAD") {
     init.body = await req.arrayBuffer()
@@ -55,12 +60,12 @@ async function proxy(req: NextRequest, path: string[]): Promise<NextResponse> {
   try {
     const upstream = await fetch(url, { ...init, signal: controller.signal })
     const body = await upstream.arrayBuffer()
-    return new NextResponse(body, {
-      status: upstream.status,
-      headers: {
-        "content-type": upstream.headers.get("content-type") ?? "application/json",
-      },
+    const responseHeaders = new Headers({
+      "content-type": upstream.headers.get("content-type") ?? "application/json",
+      "cache-control": "no-store",
     })
+    for (const cookie of upstream.headers.getSetCookie()) responseHeaders.append("set-cookie", cookie)
+    return new NextResponse(body, { status: upstream.status, headers: responseHeaders })
   } catch (e) {
     const isTimeout = e instanceof Error && e.name === "AbortError"
     const message = e instanceof Error ? e.message : String(e)
@@ -98,13 +103,19 @@ export async function DELETE(
   return proxy(req, (await params).path)
 }
 
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  return proxy(req, (await params).path)
+}
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+  return proxy(req, (await params).path)
+}
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
     headers: {
-      "access-control-allow-origin": "*",
-      "access-control-allow-methods": "GET, POST, DELETE, OPTIONS",
-      "access-control-allow-headers": "content-type",
+
+      "access-control-allow-methods": "GET, POST, PATCH, PUT, DELETE, OPTIONS",
+      "access-control-allow-headers": "content-type, x-csrf-token, authorization",
     },
   })
 }

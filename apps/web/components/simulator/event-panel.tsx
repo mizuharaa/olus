@@ -1,6 +1,6 @@
 "use client"
 import { FORM_SCHEMA, eventParams } from "@/lib/event-forms"
-import React, { useState, useEffect, useCallback, useMemo } from "react"
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Cloud, OctagonAlert, Ban, ShieldAlert, Wrench,
@@ -889,8 +889,15 @@ export function EventPanel() {
   const [tab, setTab]                         = useState<"trigger" | "live" | "active">("trigger")
   const { activeEvents, setUpdate }           = useSimulationStore()
 
-  // Clicking a tile opens the config sheet pinned to the bottom of the
-  // panel — right where the cursor already is, without burying the grid.
+  const panelRef = useRef<HTMLDivElement>(null)
+  const wasEditing = useRef(false)
+  useEffect(() => {
+    if (formOpen) panelRef.current?.querySelector<HTMLElement>("form select, form input")?.focus({ preventScroll: true })
+    else if (wasEditing.current) panelRef.current?.querySelector<HTMLInputElement>("[cmdk-input]")?.focus({ preventScroll: true })
+    wasEditing.current = formOpen
+  }, [formOpen])
+
+  // The editor uses the entire panel; the picker returns when it closes.
   const selectKind = (kind: EventKind) => {
     setSelectedKind(kind)
     setValues(FORM_SCHEMA[kind].defaults)
@@ -906,7 +913,7 @@ export function EventPanel() {
     try {
       await apiClient.del(`/events/${encodeURIComponent(id)}`)
       const response = await apiClient.get<Record<string, unknown>>("/simulator/state")
-      setUpdate(response.data)
+      setUpdate({...response.data, type: "event_cancelled"})
       toast.success("Event cancelled", { description: "Simulation impacts and recovery plans updated." })
     } catch (error) { toast.error("Could not cancel event", { description: error instanceof Error ? error.message : "Retry after reconnecting." }) }
     finally { setIsLoading(false) }
@@ -932,8 +939,10 @@ export function EventPanel() {
           : "Recovery plans ready.",
       })
       setUpdate(r.data)
+      return true
     } catch (err: any) {
       toast.error("Failed to trigger event", { description: err?.message || "Check API connection" })
+      return false
     } finally {
       setIsLoading(false)
     }
@@ -945,8 +954,7 @@ export function EventPanel() {
       const raw = values[f.key]
       params[f.key] = f.type === "number" ? Number(raw) : raw
     }
-    await triggerEvent(selectedKind, params)
-    setFormOpen(false)
+    if (await triggerEvent(selectedKind, params)) setFormOpen(false)
   }
 
   const selectedInfo = EVENT_TYPES.find((e) => e.value === selectedKind)!
@@ -954,7 +962,7 @@ export function EventPanel() {
   const schema       = FORM_SCHEMA[selectedKind]
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
+    <div ref={panelRef} className="h-full flex flex-col overflow-hidden">
       {/* No "Event Control" panel header any more.
           The context column already names this panel in its tab, so the header
           was a second title for the same thing — 56px of vertical space, above
@@ -1026,7 +1034,7 @@ export function EventPanel() {
         {/* ── Trigger tab ── */}
         {tab === "trigger" && (
         <div className="flex-1 relative min-h-0 flex flex-col">
-        <div className="flex-1 overflow-y-auto ae-scroll-smooth px-3 py-3 space-y-4 mt-0">
+        <div className={formOpen ? "hidden" : "flex-1 overflow-y-auto ae-scroll-smooth px-3 py-3 space-y-4 mt-0"}>
 
           {/* Categorised event LEDGER — full-width runbook rows with a mono
               index instead of icon-chip tiles: bigger touch targets, one
@@ -1092,39 +1100,20 @@ export function EventPanel() {
 
         </div>
 
-        {/* Config sheet — slides up from the panel's bottom edge when a tile
-            is clicked. Covers only the lower part of the panel (not the
-            screen); scrim click or ✕ dismisses it. */}
-        <AnimatePresence>
-          {formOpen && (
-            <motion.div
-              key="ev-scrim"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.14 }}
-              onClick={() => setFormOpen(false)}
-              className="absolute inset-0"
-              style={{ background: "rgba(20, 16, 25, 0.16)", zIndex: 5 }}
-            />
-          )}
-          {formOpen && (
-            <motion.div
+        {formOpen && (
+            <motion.form
+              onSubmit={e => { e.preventDefault(); if (!isLoading) void handleTrigger() }}
               key="ev-sheet"
-              role="dialog"
+              role="region"
               aria-label={`Configure ${selectedInfo.label}`}
               initial={{ opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 28 }}
               transition={{ duration: 0.18, ease: [0.22, 0.9, 0.28, 1] }}
-              className="absolute left-2 right-2 bottom-2 flex flex-col"
+              className="flex-1 min-h-0 flex flex-col"
               style={{
-                zIndex: 6,
-                maxHeight: "68%",
-                borderRadius: 14,
-                border: `1px solid ${tone.border}`,
+                border: "none",
                 background: tone.bg,
-                boxShadow: "var(--ae-shadow-overlay)",
                 overflow: "hidden",
                 fontFamily: ff.body,
               }}
@@ -1142,6 +1131,7 @@ export function EventPanel() {
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   <button
+                    type="button"
                     onClick={() => setShowDescription((d) => !d)}
                     className="flex items-center gap-1 text-[11px] font-semibold opacity-60 hover:opacity-100 transition-opacity"
                     style={{ color: tone.ink, background: "transparent", border: "none", cursor: "pointer", padding: "6px 8px" }}
@@ -1150,17 +1140,18 @@ export function EventPanel() {
                     <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showDescription ? "rotate-180" : ""}`} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => setFormOpen(false)}
-                    aria-label="Close event configuration"
+                    aria-label="Back to disruption types"
                     className="w-7 h-7 rounded-full flex items-center justify-center text-base transition-colors hover:bg-secondary"
                     style={{ color: tone.ink, background: "transparent", border: "none", cursor: "pointer" }}
                   >
-                    ×
+                    ←
                   </button>
                 </div>
               </div>
 
-              <div className="px-4 py-3.5 space-y-3 overflow-y-auto ae-scroll-smooth" style={{ minHeight: 0 }}>
+              <div className="flex-1 px-4 py-3.5 space-y-3 overflow-y-auto ae-scroll-smooth" style={{ minHeight: 0 }}>
                 {/* Expandable description */}
                 <AnimatePresence>
                   {showDescription && (
@@ -1215,6 +1206,7 @@ export function EventPanel() {
                         <input
                           id={fid}
                           type="number"
+                          required
                           value={values[f.key] ?? ""}
                           onChange={(e) => setField(f.key, e.target.value)}
                           min={f.min} max={f.max} step={f.step}
@@ -1227,9 +1219,11 @@ export function EventPanel() {
                   })}
                 </div>
 
+              </div>
+              <div className="shrink-0 px-4 py-3" style={{ borderTop: `1px solid ${tone.border}` }}>
                 {/* Trigger button — design-system primary CTA */}
                 <ButtonPrimary
-                  onClick={handleTrigger}
+                  type="submit"
                   disabled={isLoading}
                   className="w-full mt-1"
                   leadingIcon={isLoading
@@ -1239,16 +1233,15 @@ export function EventPanel() {
                   {isLoading ? "Solving…" : `Trigger ${selectedInfo.label}`}
                 </ButtonPrimary>
               </div>
-            </motion.div>
+            </motion.form>
           )}
-        </AnimatePresence>
         </div>
         )}
 
         {/* ── Live Feed tab ── */}
         {tab === "live" && (
         <div className="flex-1 overflow-y-auto ae-scroll-smooth px-3 py-3 mt-0">
-          <LiveFeed onLoadToSim={triggerEvent} isLoadingEvent={isLoading} />
+          <LiveFeed onLoadToSim={async (kind, params) => { await triggerEvent(kind, params) }} isLoadingEvent={isLoading} />
         </div>
         )}
 

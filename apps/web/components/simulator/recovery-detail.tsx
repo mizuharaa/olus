@@ -200,7 +200,7 @@ export function RecoveryDetail({
       />
       <LedgerRow
         label="Carbon"
-        value={`${co2t >= 0 ? "+" : ""}${co2t.toFixed(1)}`}
+        value={plan.total_co2_kg == null ? "—" : `${co2t >= 0 ? "+" : ""}${co2t.toFixed(1)}`}
         unit="tCO₂e"
         tone="muted"
       />

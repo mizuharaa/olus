@@ -216,6 +216,8 @@ async def get_simulator_state(request: Request):
         "active_events": engine.state.active_events,
         "flight_states": engine.state.flight_states,
         "recovery_plans": engine.state.recovery_plans,
+        "cascade_summary": engine.state.cascade_summary,
+        "applied_plan_id": engine.state.applied_plan_id,
         "schedule": engine.get_schedule_snapshot(),
     }
 

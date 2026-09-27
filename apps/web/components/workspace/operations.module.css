@@ -1,7 +1,7 @@
 .console {
   position: absolute; inset: 0; isolation: isolate; container-type: size;
   display: grid;
-  grid-template-columns: 360px minmax(0, 1fr) 380px;
+  grid-template-columns: min(var(--events-width,420px),45cqw) minmax(0, 1fr) min(var(--inspector-width,420px),45cqw);
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
   gap: var(--panel-gap); padding: 20px var(--workspace-rail);
   pointer-events: none;
@@ -96,11 +96,10 @@
 .empty { padding: var(--panel-padding); }
 .empty p { margin: 16px 0; }
 .timeline { grid-column: 1 / -1; grid-row: 5; padding: 0 16px; }
-.timeline > button { width: 100%; justify-content: space-between; gap: 12px; border: 0; min-height: 52px; text-align: left; }
-.timeline > button span { font-size: 13px; color: var(--secondary); }
-.timeline[data-open=true] { height: min(var(--timeline-height,300px),35cqh); display: flex; flex-direction: column; }
+.timeline > header > button { width: 100%; justify-content: space-between; gap: 12px; border: 0; min-height: 52px; text-align: left; }
+.timeline > header > button span { font-size: 13px; color: var(--secondary); }
+.timeline[data-open=true] { height: min(var(--timeline-height,300px),65cqh); display: flex; flex-direction: column; }
 .timeline[data-open=true] > :last-child { min-height: 0; overflow: auto; }
-.timeline[data-open=true] > button { flex-shrink: 0; }
 .comparison > [role=separator], .timeline > [role=separator] { margin: 0!important; }
 .layerMode { grid-column: 1 / -1; grid-row: 4; justify-self: end; display: flex; align-items: center; gap: 16px; max-width: 100%; background: var(--surface); padding: 6px 12px; border-radius: var(--tool-radius); font-size: 13px; }
 .layerMode button { min-height: 44px; font-size: 14px; }
@@ -118,14 +117,13 @@
 .console button { transition: background 160ms ease,color 160ms ease; box-shadow: none; }
 .console button:focus-visible, .console :global(.ae-cmd-item:focus-visible) { outline: 2px solid var(--recover)!important; outline-offset: -2px; }
 @media (max-width: 1279px) {
-  .console { grid-template-columns: 320px minmax(0,1fr) 320px; }
   .identity { flex: 1 1 100%; }
   .identity h1 { font-size: 24px; }
 }
 @media (max-width: 1099px) {
   .console { grid-template-columns: minmax(0,1fr); }
-  .events, .inspector { grid-column: 1; width: min(380px,100%); }
-  .inspector { justify-self: end; }
+  .events, .inspector { grid-column: 1; width: min(var(--events-width,420px),100%); }
+  .inspector { justify-self: end; width: min(var(--inspector-width,420px),100%); }
   .console[data-events=true] .inspector, .console[data-compare=true] .events { display: none; }
   .console[data-events=true] .comparison { grid-column: 1; }
 }
@@ -144,7 +142,7 @@
   .comparison { padding: 8px; }
   .recoveryTabs label, .recoveryTabs select { width: 100%; }
   .timeline { padding-inline: 8px; }
-  .timeline > button span { display: none; }
+  .timeline > header > button span { display: none; }
   .layerMode { padding: 0; background: transparent; }
   .layerMode > span { display: none; }
   .layerMode button { background: var(--surface); }
@@ -153,3 +151,24 @@
   .map :global(.ae-map-legend) { display: none!important; }
 }
 @media (prefers-reduced-motion: reduce) { .console * { animation: none!important; transition: none!important; } }
+
+.windowActions { display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
+.windowActions button { min-width: 44px; min-height: 44px; }
+.events > [role=separator], .inspector > [role=separator] { position: absolute!important; top: 0; right: 0; margin: 0!important; }
+.inspector > [role=separator] { right: auto; left: 0; }
+.events :is(input,select) { min-height: 44px; }
+.events form label { text-transform: none; letter-spacing: normal; }
+.events form > div { padding-inline: 0; }
+.timeline > header { display: flex; gap: 8px; flex-shrink: 0; }
+.timeline > header > button:first-child { flex: 1; }
+.timeline > header > button:last-child { width: auto; flex-shrink: 0; }
+.console:has(> [data-expanded=true]) > :not([data-expanded=true]):not(.map) { visibility: hidden; pointer-events: none; }
+.console > :is(.events,.inspector,.comparison,.timeline)[data-expanded=true] { grid-area: 1 / 1 / -1 / -1; align-self: stretch; justify-self: stretch; position: absolute; inset: 12px; width: auto; height: auto; max-height: none; z-index: 40; display: flex; }
+.console > [data-expanded=true] > [role=separator] { display: none!important; }
+.events[data-expanded=true] form { width: min(100%,760px); margin-inline: auto; }
+@media (max-width: 700px) {
+  .events > [role=separator], .inspector > [role=separator] { display: none!important; }
+  .timeline > header { flex-wrap: wrap; }
+  .timeline > header > button { min-width: 0; }
+  .console > [data-expanded=true] { inset: 8px; }
+}

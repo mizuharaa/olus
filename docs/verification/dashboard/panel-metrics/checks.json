@@ -1,0 +1,148 @@
+{
+  "viewports": [
+    {
+      "width": 1440,
+      "editor": {
+        "x": 36,
+        "y": 96,
+        "width": 1368,
+        "height": 742
+      }
+    },
+    {
+      "width": 768,
+      "editor": {
+        "x": 28,
+        "y": 137,
+        "width": 712,
+        "height": 701
+      }
+    },
+    {
+      "width": 390,
+      "editor": {
+        "x": 24,
+        "y": 129,
+        "width": 342,
+        "height": 717
+      }
+    },
+    {
+      "width": 320,
+      "editor": {
+        "x": 24,
+        "y": 129,
+        "width": 272,
+        "height": 717
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "wind-shear",
+      "cascade": {
+        "directly_affected": 28,
+        "cascade_1": 5,
+        "cascade_2": 5,
+        "total_affected": 38,
+        "unaffected": 104,
+        "total_delay_minutes": 2756
+      },
+      "plans": [
+        {
+          "id": "A",
+          "cost": 636304,
+          "paxMinutes": 381271,
+          "cancelled": 0,
+          "delayed": 38,
+          "crew": 4,
+          "co2": 244565.988
+        },
+        {
+          "id": "B",
+          "cost": 636304,
+          "paxMinutes": 381271,
+          "cancelled": 0,
+          "delayed": 38,
+          "crew": 4,
+          "co2": 244565.988
+        },
+        {
+          "id": "C",
+          "cost": 636304,
+          "paxMinutes": 381271,
+          "cancelled": 0,
+          "delayed": 38,
+          "crew": 4,
+          "co2": 244565.988
+        },
+        {
+          "id": "D",
+          "cost": 636304,
+          "paxMinutes": 381271,
+          "cancelled": 0,
+          "delayed": 38,
+          "crew": 4,
+          "co2": 244565.988
+        }
+      ]
+    },
+    {
+      "name": "thunderstorm",
+      "cascade": {
+        "directly_affected": 52,
+        "cascade_1": 8,
+        "cascade_2": 7,
+        "total_affected": 67,
+        "unaffected": 75,
+        "total_delay_minutes": 9631
+      },
+      "plans": [
+        {
+          "id": "A",
+          "cost": 2051137,
+          "paxMinutes": 1217737,
+          "cancelled": 0,
+          "delayed": 67,
+          "crew": 8,
+          "co2": 815310.8890000001
+        },
+        {
+          "id": "B",
+          "cost": 2051137,
+          "paxMinutes": 1217737,
+          "cancelled": 0,
+          "delayed": 67,
+          "crew": 8,
+          "co2": 815310.8890000001
+        },
+        {
+          "id": "C",
+          "cost": 3238163,
+          "paxMinutes": 272887,
+          "cancelled": 52,
+          "delayed": 15,
+          "crew": 2,
+          "co2": -595924.966
+        },
+        {
+          "id": "D",
+          "cost": 2348899,
+          "paxMinutes": 1047666,
+          "cancelled": 16,
+          "delayed": 51,
+          "crew": 6,
+          "co2": 491368.46600000013
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "panels": [
+    "events",
+    "recovery",
+    "timeline",
+    "flight inspector"
+  ],
+  "pass": true
+}

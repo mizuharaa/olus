@@ -88,9 +88,10 @@ const ROWS: Row[] = [
   {
     key: "co2",
     label: "tCO₂e",
-    value: (p) => (p.total_co2_kg ?? 0) / 1000,
+    value: (p) => (p.total_co2_kg ?? NaN) / 1000,
     render: (p) => {
-      const t = (p.total_co2_kg ?? 0) / 1000
+      if (p.total_co2_kg == null) return "—"
+      const t = p.total_co2_kg / 1000
       return `${t >= 0 ? "+" : ""}${t.toFixed(1)}`
     },
     rank: null,
@@ -385,12 +386,12 @@ export function PlanCompareBoard({
           background: c.surfaceSoft, flexWrap: "wrap",
         }}
       >
-        <Figure value={cascadeSummary?.total_affected ?? 0} label="affected" size={13} />
+        <Figure value={cascadeSummary?.total_affected ?? "—"} label="affected" size={13} />
         <span style={{ color: c.muted, fontSize: 11 }}>·</span>
-        <Figure value={cascadeSummary?.directly_affected ?? 0} label="direct" size={13} tone="muted" />
+        <Figure value={cascadeSummary?.directly_affected ?? "—"} label="direct" size={13} tone="muted" />
         <span style={{ color: c.muted, fontSize: 11 }}>·</span>
         <Figure
-          value={(cascadeSummary?.cascade_1 ?? 0) + (cascadeSummary?.cascade_2 ?? 0)}
+          value={cascadeSummary?.cascade_1 != null && cascadeSummary?.cascade_2 != null ? cascadeSummary.cascade_1 + cascadeSummary.cascade_2 : "—"}
           label="cascade"
           size={13}
           tone="muted"

@@ -88,11 +88,13 @@ jobs:
           Path('/tmp/olus-compose.yml').write_text(template.substitute({key: json.dumps(value) for key, value in values.items()}))
           PY
           # Built as a file so the shell never has to quote JSON inside JSON.
-          jq -n --arg region "$AWS_REGION" --arg registry "$REGISTRY" --rawfile compose /tmp/olus-compose.yml --rawfile backup infra/aws/backup.sh '{
+          jq -n --arg region "$AWS_REGION" --arg registry "$REGISTRY" --rawfile compose /tmp/olus-compose.yml --rawfile backup infra/aws/backup.sh --rawfile secrets infra/aws/load-secrets.py '{
             commands: [
               "set -euo pipefail",
               "aws ecr get-login-password --region \($region) | docker login --username AWS --password-stdin \($registry)",
               "echo \($compose | @base64) | base64 -d > /opt/olus/docker-compose.next.yml",
+              "echo \($secrets | @base64) | base64 -d > /tmp/olus-load-secrets.py",
+              "python3 /tmp/olus-load-secrets.py \($region) /opt/olus/api.env",
               "docker compose -f /opt/olus/docker-compose.next.yml config --quiet",
               "mv /opt/olus/docker-compose.next.yml /opt/olus/docker-compose.yml",
               "docker compose -f /opt/olus/docker-compose.yml pull",

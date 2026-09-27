@@ -43,11 +43,30 @@ export async function checkWorkspaceLayout(page, evidence) {
     const commitBox=await commit.boundingBox();
     assert.ok(commitBox&&commitBox.y>=compared.recovery.y&&commitBox.y+commitBox.height<=compared.recovery.bottom+1,`${width}: commit action outside recovery panel`);
     await page.screenshot({path:join(evidence,`layout-${width}-recovery.png`)});
+    if(width===1440){
+      const applications=[];
+      const capture=r=>{if(r.method()==='POST'&&r.url().endsWith('/apply'))applications.push(r.url())};
+      page.on('request',capture);
+      await page.getByRole('button',{name:'Cost and risk detail',exact:true}).click();
+      await page.getByRole('button',{name:/^Review and apply plan /}).click();
+      await page.getByRole('button',{name:/^Commit plan .*asks for confirmation/}).waitFor();
+      assert.deepEqual(applications,[],'Review from detail must not apply the plan');
+      page.off('request',capture);
+      await page.getByRole('button',{name:'Workspace preferences',exact:true}).click();
+      await page.getByLabel('Theme',{exact:true}).selectOption('dark');
+      await page.getByRole('button',{name:'Close preferences'}).click();
+      await settle();
+      await page.screenshot({path:join(evidence,'layout-1440-dark-recovery.png')});
+      await page.getByRole('button',{name:'Workspace preferences',exact:true}).click();
+      await page.getByLabel('Theme',{exact:true}).selectOption('light');
+      await page.getByRole('button',{name:'Close preferences'}).click();
+    }
+
     await page.getByRole('button',{name:/^Recovery /}).click();
     if(width>=1100)await page.getByRole('button',{name:'Close events'}).click();
     const search=page.getByRole('textbox',{name:'Search flights by number, tail or airport code'});
     await search.fill('NB101');
-    await page.getByRole('button',{name:/NB101/}).first().click();
+    await page.getByRole('navigation',{name:'Operations controls'}).getByRole('button',{name:/NB101/}).first().click();
     await page.getByRole('complementary',{name:'Flight inspector'}).waitFor();
     const inspector=await page.getByRole('complementary',{name:'Flight inspector'}).boundingBox();
     assert.ok(inspector.x>=0&&inspector.x+inspector.width<=width+1,`${width}: inspector out of bounds`);

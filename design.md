@@ -1,5 +1,12 @@
 # Design — Olus
 
+## Current operator direction: Clear dispatch workspace (2026-09-27)
+
+Mode: Operate. The current request supersedes the older compact paper-board direction. Match the live landing's Olus loop mark, deep teal ink, warm white and clear type. Use a light workspace by default for daytime dispatch, retaining saved dark/system preferences. Keep the map as the working canvas, with independently collapsible tools, 44px controls, generous panel gutters and readable status rows. Avoid beige category bars, tiny uppercase labels and decorative metrics. Use semantic color only for status, focus and primary action. Motion acknowledges input in 160ms and respects reduced motion.
+
+Reference evidence: Mobbin incident.io screen cd5791fc-693d-41c5-9311-ec061d7a64bb (incident hierarchy), KAYAK a60c42b8-9aea-4d69-82eb-0b381b3fc9c4 (persistent map context), Linear 344cad59-d4a8-421a-9c2f-14b3c977e82d (quiet hierarchy). These informed layout, not a claim about popularity. Preserve solver results, private-account scope, map/globe, aircraft inspection, plan confirmation and existing analysis tools. Landing artwork remains unchanged.
+
+
 ## Current dashboard direction: Floating tools (2026-09-16)
 
 User selected Floating tools from `/design-review`. This supersedes older console surface decisions below: full-screen map, independently collapsible floating event/inspection/recovery/timeline panels, 8px corners, 1px neutral boundaries, no decorative colored stripes or layered shadows. Neutral selection and short 160ms color transitions; semantic color remains on operational states and keyboard focus. Keep 48px event rows and readable body text. Preserve all existing operations, 3D aircraft, financial plans A/B/C/D and map interactions. Implementation: `apps/web/components/workspace/operations.module.css`. Older dated decisions remain historical context.

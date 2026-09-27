@@ -25,12 +25,12 @@ export function WorkspaceShell({ children }: { children: React.ReactNode }) {
 function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname(), router = useRouter()
   const { errors, loading, connected, retry, runId } = useWorkspaceData()
-  const [theme, setTheme] = useState("dark"), [density, setDensity] = useState("comfortable"), [search, setSearch] = useState("")
+  const [theme, setTheme] = useState("light"), [density, setDensity] = useState("comfortable"), [search, setSearch] = useState("")
   const [analysis,setAnalysis]=useState<string|null>(null),[brief,setBrief]=useState(false),[systemDark,setSystemDark]=useState(true)
   const analysisDialog=useRef<HTMLDialogElement>(null),toolsMenu=useRef<HTMLDetailsElement>(null)
   const command = useRef<HTMLDialogElement>(null), preferences = useRef<HTMLDialogElement>(null)
   useEffect(() => {
-    try { setTheme(localStorage.getItem("olus-workspace-theme") || "dark"); setDensity(localStorage.getItem("olus-workspace-density") || "comfortable") } catch {}
+    try { setTheme(localStorage.getItem("olus-workspace-theme") || "light"); setDensity(localStorage.getItem("olus-workspace-density") || "comfortable") } catch {}
     const preferencesChanged=(event:Event)=>{const p=(event as CustomEvent<{theme:string;density:string}>).detail;setTheme(p.theme);setDensity(p.density)}
     window.addEventListener("olus-preferences-changed",preferencesChanged)
     const key = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === "k") { e.preventDefault(); command.current?.showModal() } }

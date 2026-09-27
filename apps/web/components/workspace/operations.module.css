@@ -3,7 +3,7 @@
   display: grid;
   grid-template-columns: 360px minmax(0, 1fr) 380px;
   grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  gap: var(--panel-gap); padding: 16px var(--workspace-rail);
+  gap: var(--panel-gap); padding: 20px var(--workspace-rail);
   pointer-events: none;
   --ae-canvas: var(--surface); --ae-raised: var(--ink-600);
   --ae-glass: var(--surface); --ae-glass-line: var(--line);
@@ -21,17 +21,18 @@
 .toolbar {
   grid-column: 1 / -1; grid-row: 1; margin-right: 144px;
   display: flex; align-items: center; flex-wrap: wrap; gap: var(--control-gap);
-  padding: 12px 16px; background: var(--surface);
+  padding: 20px 24px; background: var(--surface);
   border: 1px solid var(--line); border-radius: var(--tool-radius);
   z-index: 25;
 }
-.identity { margin-right: 16px; }
+.identity { margin-right: auto; min-width: 230px; }
 .identity span, .events header span { display: block; font: 12px/20px Inter,sans-serif; color: var(--secondary); }
-.identity strong { font-size: 20px; font-weight: 500; }
+.identity h1 { font-size: 27px; line-height: 1.3; letter-spacing: -.03em; margin: 2px 0 6px; }
+.identity p { font-size: 13px; }
 .toolbar button { border-radius: var(--tool-radius); font-size: 14px; gap: 8px; }
 .toolbar button[aria-expanded=true], .planSwitcher button[aria-pressed=true], .recoveryTabs button[aria-pressed=true] { background: var(--foreground); color: var(--field); }
-.toolbar b { font: 13px "JetBrains Mono",monospace; }
-.search { flex: 1 1 220px; min-width: 180px; margin-left: auto; }
+.toolbar b { font: 500 13px Inter,sans-serif; min-width: 22px; }
+.search { flex: 1 1 240px; max-width: 360px; min-width: 180px; margin-left: auto; }
 .search input { width: 100%; min-width: 0; padding: 0; border: 0; }
 .search button { min-height: var(--control-height); }
 .search :is(p,span) { font-size: 14px!important; }
@@ -52,6 +53,12 @@
 .events, .inspector { grid-row: 3; padding: var(--panel-padding); display: flex; flex-direction: column; }
 .events { grid-column: 1; overflow: hidden; }
 .events > div { min-height: 0; }
+.events > p { font-size: 14px; line-height: 1.65; margin-bottom: 16px; }
+.events > a { display: flex; align-items: center; min-height: 44px; font-size: 14px; text-decoration: underline; text-underline-offset: 4px; }
+.eventList { padding: 0; margin: 24px 0 0; overflow: auto; list-style: none; }
+.eventList li { display: flex; align-items: flex-start; gap: 12px; padding: 20px 0; border-top: 1px solid var(--line); }
+.eventList strong { display: block; font-size: 15px; font-weight: 500; text-transform: capitalize; }
+.eventList span { display: flex; gap: 6px; align-items: center; color: var(--secondary); font-size: 13px; margin-top: 8px; }
 .events header { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding-bottom: 16px; margin-bottom: 16px; flex-shrink: 0; }
 .events h2 { font-size: 24px; line-height: 32px; margin: 4px 0 0; }
 .events :global(.ae-event-tile) { min-height: 48px; padding: 12px!important; }
@@ -112,7 +119,8 @@
 .console button:focus-visible, .console :global(.ae-cmd-item:focus-visible) { outline: 2px solid var(--recover)!important; outline-offset: -2px; }
 @media (max-width: 1279px) {
   .console { grid-template-columns: 320px minmax(0,1fr) 320px; }
-  .identity { display: none; }
+  .identity { flex: 1 1 100%; }
+  .identity h1 { font-size: 24px; }
 }
 @media (max-width: 1099px) {
   .console { grid-template-columns: minmax(0,1fr); }
@@ -123,9 +131,12 @@
 }
 @media (max-width: 700px) {
   .console { padding-block: 12px; gap: 8px; }
-  .toolbar { margin-right: 0; padding: 8px; }
+  .toolbar { margin-right: 0; padding: 12px; }
+  .identity { min-width: 0; }
+  .identity p { margin-top: 4px; }
+  .toolbar > button svg { display: none; }
   .toolbar > button { padding-inline: 8px; }
-  .search { flex-basis: 100%; min-width: 0; }
+  .search { flex-basis: 100%; min-width: 0; max-width: none; }
   .planSwitcher { justify-self: stretch; gap: 4px; padding: 4px; }
   .planSwitcher span { display: none; }
   .planSwitcher button { padding: 8px; }

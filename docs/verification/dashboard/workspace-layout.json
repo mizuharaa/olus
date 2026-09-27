@@ -24,17 +24,17 @@
         "x": 12,
         "y": 117,
         "width": 296,
-        "height": 166,
+        "height": 260.6875,
         "right": 308,
-        "bottom": 283
+        "bottom": 377.6875
       },
       "preview": {
         "x": 12,
-        "y": 291,
+        "y": 385.6875,
         "width": 296,
         "height": 54,
         "right": 308,
-        "bottom": 345
+        "bottom": 439.6875
       },
       "events": null,
       "recovery": null,
@@ -65,14 +65,14 @@
         {
           "text": "Events 1",
           "height": 44,
-          "width": 78.09375,
+          "width": 92.28125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Recovery 4",
           "height": 44,
-          "width": 96.015625,
+          "width": 110.203125,
           "visible": true,
           "clickable": true
         },
@@ -107,23 +107,23 @@
           "x": 12,
           "y": 117,
           "width": 296,
-          "height": 166,
+          "height": 260.6875,
           "right": 308,
-          "bottom": 283
+          "bottom": 377.6875
         },
         "preview": {
           "x": 12,
-          "y": 291,
+          "y": 385.6875,
           "width": 296,
           "height": 54,
           "right": 308,
-          "bottom": 345
+          "bottom": 439.6875
         },
         "events": {
           "x": 12,
-          "y": 353,
+          "y": 447.6875,
           "width": 296,
-          "height": 391,
+          "height": 296.3125,
           "right": 308,
           "bottom": 744
         },
@@ -155,14 +155,14 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 78.09375,
+            "width": 92.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 96.015625,
+            "width": 110.203125,
             "visible": true,
             "clickable": true
           },
@@ -198,24 +198,24 @@
           "x": 12,
           "y": 117,
           "width": 296,
-          "height": 166,
+          "height": 260.6875,
           "right": 308,
-          "bottom": 283
+          "bottom": 377.6875
         },
         "preview": {
           "x": 12,
-          "y": 291,
+          "y": 385.6875,
           "width": 296,
           "height": 54,
           "right": 308,
-          "bottom": 345
+          "bottom": 439.6875
         },
         "events": null,
         "recovery": {
           "x": 12,
-          "y": 353,
+          "y": 447.6875,
           "width": 296,
-          "height": 505,
+          "height": 410.3125,
           "right": 308,
           "bottom": 858
         },
@@ -246,14 +246,14 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 78.09375,
+            "width": 92.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 96.015625,
+            "width": 110.203125,
             "visible": true,
             "clickable": true
           },
@@ -290,17 +290,17 @@
         "x": 12,
         "y": 117,
         "width": 366,
-        "height": 114,
+        "height": 208.6875,
         "right": 378,
-        "bottom": 231
+        "bottom": 325.6875
       },
       "preview": {
         "x": 12,
-        "y": 239,
+        "y": 333.6875,
         "width": 366,
         "height": 54,
         "right": 378,
-        "bottom": 293
+        "bottom": 387.6875
       },
       "events": null,
       "recovery": null,
@@ -331,14 +331,14 @@
         {
           "text": "Events 1",
           "height": 44,
-          "width": 78.09375,
+          "width": 92.28125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Recovery 4",
           "height": 44,
-          "width": 96.015625,
+          "width": 110.203125,
           "visible": true,
           "clickable": true
         },
@@ -373,23 +373,23 @@
           "x": 12,
           "y": 117,
           "width": 366,
-          "height": 114,
+          "height": 208.6875,
           "right": 378,
-          "bottom": 231
+          "bottom": 325.6875
         },
         "preview": {
           "x": 12,
-          "y": 239,
+          "y": 333.6875,
           "width": 366,
           "height": 54,
           "right": 378,
-          "bottom": 293
+          "bottom": 387.6875
         },
         "events": {
           "x": 12,
-          "y": 301,
+          "y": 395.6875,
           "width": 366,
-          "height": 443,
+          "height": 348.3125,
           "right": 378,
           "bottom": 744
         },
@@ -421,14 +421,14 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 78.09375,
+            "width": 92.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 96.015625,
+            "width": 110.203125,
             "visible": true,
             "clickable": true
           },
@@ -464,24 +464,24 @@
           "x": 12,
           "y": 117,
           "width": 366,
-          "height": 114,
+          "height": 208.6875,
           "right": 378,
-          "bottom": 231
+          "bottom": 325.6875
         },
         "preview": {
           "x": 12,
-          "y": 239,
+          "y": 333.6875,
           "width": 366,
           "height": 54,
           "right": 378,
-          "bottom": 293
+          "bottom": 387.6875
         },
         "events": null,
         "recovery": {
           "x": 12,
-          "y": 338,
+          "y": 395.6875,
           "width": 366,
-          "height": 520,
+          "height": 462.3125,
           "right": 378,
           "bottom": 858
         },
@@ -512,14 +512,14 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 78.09375,
+            "width": 92.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 96.015625,
+            "width": 110.203125,
             "visible": true,
             "clickable": true
           },
@@ -554,19 +554,19 @@
       },
       "toolbar": {
         "x": 16,
-        "y": 121,
+        "y": 125,
         "width": 592,
-        "height": 122,
+        "height": 224.6875,
         "right": 608,
-        "bottom": 243
+        "bottom": 349.6875
       },
       "preview": {
         "x": 137.859375,
-        "y": 255,
+        "y": 361.6875,
         "width": 492.265625,
         "height": 62,
         "right": 630.125,
-        "bottom": 317
+        "bottom": 423.6875
       },
       "events": null,
       "recovery": null,
@@ -597,21 +597,21 @@
         {
           "text": "Events 1",
           "height": 44,
-          "width": 90.09375,
+          "width": 130.28125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Recovery 4",
           "height": 44,
-          "width": 108.015625,
+          "width": 148.203125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Back to demo",
           "height": 44,
-          "width": 120.8125,
+          "width": 145.8125,
           "visible": true,
           "clickable": true
         }
@@ -637,27 +637,27 @@
         },
         "toolbar": {
           "x": 16,
-          "y": 121,
+          "y": 125,
           "width": 592,
-          "height": 122,
+          "height": 224.6875,
           "right": 608,
-          "bottom": 243
+          "bottom": 349.6875
         },
         "preview": {
           "x": 137.859375,
-          "y": 255,
+          "y": 361.6875,
           "width": 492.265625,
           "height": 62,
           "right": 630.125,
-          "bottom": 317
+          "bottom": 423.6875
         },
         "events": {
           "x": 16,
-          "y": 329,
+          "y": 435.6875,
           "width": 380,
-          "height": 391,
+          "height": 280.3125,
           "right": 396,
-          "bottom": 720
+          "bottom": 716
         },
         "recovery": null,
         "links": [
@@ -687,21 +687,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -728,28 +728,28 @@
         },
         "toolbar": {
           "x": 16,
-          "y": 121,
+          "y": 125,
           "width": 592,
-          "height": 122,
+          "height": 224.6875,
           "right": 608,
-          "bottom": 243
+          "bottom": 349.6875
         },
         "preview": {
           "x": 137.859375,
-          "y": 255,
+          "y": 361.6875,
           "width": 492.265625,
           "height": 62,
           "right": 630.125,
-          "bottom": 317
+          "bottom": 423.6875
         },
         "events": null,
         "recovery": {
           "x": 16,
-          "y": 334,
+          "y": 435.6875,
           "width": 736,
-          "height": 520,
+          "height": 414.3125,
           "right": 752,
-          "bottom": 854
+          "bottom": 850
         },
         "links": [
           {
@@ -778,21 +778,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -820,19 +820,19 @@
       },
       "toolbar": {
         "x": 16,
-        "y": 121,
+        "y": 125,
         "width": 848,
-        "height": 70,
+        "height": 172.6875,
         "right": 864,
-        "bottom": 191
+        "bottom": 297.6875
       },
       "preview": {
         "x": 265.859375,
-        "y": 203,
+        "y": 309.6875,
         "width": 492.265625,
         "height": 62,
         "right": 758.125,
-        "bottom": 265
+        "bottom": 371.6875
       },
       "events": null,
       "recovery": null,
@@ -863,21 +863,21 @@
         {
           "text": "Events 1",
           "height": 44,
-          "width": 90.09375,
+          "width": 130.28125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Recovery 4",
           "height": 44,
-          "width": 108.015625,
+          "width": 148.203125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Back to demo",
           "height": 44,
-          "width": 120.8125,
+          "width": 145.8125,
           "visible": true,
           "clickable": true
         }
@@ -903,27 +903,27 @@
         },
         "toolbar": {
           "x": 16,
-          "y": 121,
+          "y": 125,
           "width": 848,
-          "height": 70,
+          "height": 172.6875,
           "right": 864,
-          "bottom": 191
+          "bottom": 297.6875
         },
         "preview": {
           "x": 265.859375,
-          "y": 203,
+          "y": 309.6875,
           "width": 492.265625,
           "height": 62,
           "right": 758.125,
-          "bottom": 265
+          "bottom": 371.6875
         },
         "events": {
           "x": 16,
-          "y": 277,
+          "y": 383.6875,
           "width": 380,
-          "height": 443,
+          "height": 332.3125,
           "right": 396,
-          "bottom": 720
+          "bottom": 716
         },
         "recovery": null,
         "links": [
@@ -953,21 +953,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -994,28 +994,28 @@
         },
         "toolbar": {
           "x": 16,
-          "y": 121,
+          "y": 125,
           "width": 848,
-          "height": 70,
+          "height": 172.6875,
           "right": 864,
-          "bottom": 191
+          "bottom": 297.6875
         },
         "preview": {
           "x": 265.859375,
-          "y": 203,
+          "y": 309.6875,
           "width": 492.265625,
           "height": 62,
           "right": 758.125,
-          "bottom": 265
+          "bottom": 371.6875
         },
         "events": null,
         "recovery": {
           "x": 16,
-          "y": 334,
+          "y": 383.6875,
           "width": 992,
-          "height": 520,
+          "height": 466.3125,
           "right": 1008,
-          "bottom": 854
+          "bottom": 850
         },
         "links": [
           {
@@ -1044,21 +1044,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -1086,19 +1086,19 @@
       },
       "toolbar": {
         "x": 24,
-        "y": 80,
+        "y": 84,
         "width": 1088,
-        "height": 76,
+        "height": 124.59375,
         "right": 1112,
-        "bottom": 156
+        "bottom": 208.59375
       },
       "preview": {
         "x": 393.859375,
-        "y": 168,
+        "y": 220.59375,
         "width": 492.265625,
         "height": 62,
         "right": 886.125,
-        "bottom": 230
+        "bottom": 282.59375
       },
       "events": null,
       "recovery": null,
@@ -1129,21 +1129,21 @@
         {
           "text": "Events 1",
           "height": 44,
-          "width": 90.09375,
+          "width": 130.28125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Recovery 4",
           "height": 44,
-          "width": 108.015625,
+          "width": 148.203125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Back to demo",
           "height": 44,
-          "width": 120.8125,
+          "width": 145.8125,
           "visible": true,
           "clickable": true
         }
@@ -1169,27 +1169,27 @@
         },
         "toolbar": {
           "x": 24,
-          "y": 80,
+          "y": 84,
           "width": 1088,
-          "height": 76,
+          "height": 124.59375,
           "right": 1112,
-          "bottom": 156
+          "bottom": 208.59375
         },
         "preview": {
           "x": 393.859375,
-          "y": 168,
+          "y": 220.59375,
           "width": 492.265625,
           "height": 62,
           "right": 886.125,
-          "bottom": 230
+          "bottom": 282.59375
         },
         "events": {
           "x": 24,
-          "y": 242,
+          "y": 294.59375,
           "width": 360,
-          "height": 478,
+          "height": 421.40625,
           "right": 384,
-          "bottom": 720
+          "bottom": 716
         },
         "recovery": null,
         "links": [
@@ -1219,21 +1219,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -1260,35 +1260,35 @@
         },
         "toolbar": {
           "x": 24,
-          "y": 80,
+          "y": 84,
           "width": 1088,
-          "height": 76,
+          "height": 124.59375,
           "right": 1112,
-          "bottom": 156
+          "bottom": 208.59375
         },
         "preview": {
           "x": 393.859375,
-          "y": 168,
+          "y": 220.59375,
           "width": 492.265625,
           "height": 62,
           "right": 886.125,
-          "bottom": 230
+          "bottom": 282.59375
         },
         "events": {
           "x": 24,
-          "y": 242,
+          "y": 294.59375,
           "width": 360,
-          "height": 588,
+          "height": 531.40625,
           "right": 384,
-          "bottom": 830
+          "bottom": 826
         },
         "recovery": {
           "x": 396,
-          "y": 334,
+          "y": 330,
           "width": 860,
           "height": 520,
           "right": 1256,
-          "bottom": 854
+          "bottom": 850
         },
         "links": [
           {
@@ -1317,21 +1317,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -1359,19 +1359,19 @@
       },
       "toolbar": {
         "x": 24,
-        "y": 80,
+        "y": 84,
         "width": 1248,
-        "height": 76,
+        "height": 124.59375,
         "right": 1272,
-        "bottom": 156
+        "bottom": 208.59375
       },
       "preview": {
         "x": 473.859375,
-        "y": 168,
+        "y": 220.59375,
         "width": 492.265625,
         "height": 62,
         "right": 966.125,
-        "bottom": 230
+        "bottom": 282.59375
       },
       "events": null,
       "recovery": null,
@@ -1402,21 +1402,21 @@
         {
           "text": "Events 1",
           "height": 44,
-          "width": 90.09375,
+          "width": 130.28125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Recovery 4",
           "height": 44,
-          "width": 108.015625,
+          "width": 148.203125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Back to demo",
           "height": 44,
-          "width": 120.8125,
+          "width": 145.8125,
           "visible": true,
           "clickable": true
         }
@@ -1442,27 +1442,27 @@
         },
         "toolbar": {
           "x": 24,
-          "y": 80,
+          "y": 84,
           "width": 1248,
-          "height": 76,
+          "height": 124.59375,
           "right": 1272,
-          "bottom": 156
+          "bottom": 208.59375
         },
         "preview": {
           "x": 473.859375,
-          "y": 168,
+          "y": 220.59375,
           "width": 492.265625,
           "height": 62,
           "right": 966.125,
-          "bottom": 230
+          "bottom": 282.59375
         },
         "events": {
           "x": 24,
-          "y": 242,
+          "y": 294.59375,
           "width": 360,
-          "height": 478,
+          "height": 421.40625,
           "right": 384,
-          "bottom": 720
+          "bottom": 716
         },
         "recovery": null,
         "links": [
@@ -1492,21 +1492,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -1533,35 +1533,35 @@
         },
         "toolbar": {
           "x": 24,
-          "y": 80,
+          "y": 84,
           "width": 1248,
-          "height": 76,
+          "height": 124.59375,
           "right": 1272,
-          "bottom": 156
+          "bottom": 208.59375
         },
         "preview": {
           "x": 473.859375,
-          "y": 168,
+          "y": 220.59375,
           "width": 492.265625,
           "height": 62,
           "right": 966.125,
-          "bottom": 230
+          "bottom": 282.59375
         },
         "events": {
           "x": 24,
-          "y": 242,
+          "y": 294.59375,
           "width": 360,
-          "height": 588,
+          "height": 531.40625,
           "right": 384,
-          "bottom": 830
+          "bottom": 826
         },
         "recovery": {
           "x": 396,
-          "y": 334,
+          "y": 330,
           "width": 1020,
           "height": 520,
           "right": 1416,
-          "bottom": 854
+          "bottom": 850
         },
         "links": [
           {
@@ -1590,21 +1590,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -1632,19 +1632,19 @@
       },
       "toolbar": {
         "x": 24,
-        "y": 80,
+        "y": 84,
         "width": 1728,
-        "height": 76,
+        "height": 124.59375,
         "right": 1752,
-        "bottom": 156
+        "bottom": 208.59375
       },
       "preview": {
         "x": 713.859375,
-        "y": 168,
+        "y": 220.59375,
         "width": 492.265625,
         "height": 62,
         "right": 1206.125,
-        "bottom": 230
+        "bottom": 282.59375
       },
       "events": null,
       "recovery": null,
@@ -1675,21 +1675,21 @@
         {
           "text": "Events 1",
           "height": 44,
-          "width": 90.09375,
+          "width": 130.28125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Recovery 4",
           "height": 44,
-          "width": 108.015625,
+          "width": 148.203125,
           "visible": true,
           "clickable": true
         },
         {
           "text": "Back to demo",
           "height": 44,
-          "width": 120.8125,
+          "width": 145.8125,
           "visible": true,
           "clickable": true
         }
@@ -1715,27 +1715,27 @@
         },
         "toolbar": {
           "x": 24,
-          "y": 80,
+          "y": 84,
           "width": 1728,
-          "height": 76,
+          "height": 124.59375,
           "right": 1752,
-          "bottom": 156
+          "bottom": 208.59375
         },
         "preview": {
           "x": 713.859375,
-          "y": 168,
+          "y": 220.59375,
           "width": 492.265625,
           "height": 62,
           "right": 1206.125,
-          "bottom": 230
+          "bottom": 282.59375
         },
         "events": {
           "x": 24,
-          "y": 242,
+          "y": 294.59375,
           "width": 360,
-          "height": 478,
+          "height": 421.40625,
           "right": 384,
-          "bottom": 720
+          "bottom": 716
         },
         "recovery": null,
         "links": [
@@ -1765,21 +1765,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }
@@ -1806,35 +1806,35 @@
         },
         "toolbar": {
           "x": 24,
-          "y": 80,
+          "y": 84,
           "width": 1728,
-          "height": 76,
+          "height": 124.59375,
           "right": 1752,
-          "bottom": 156
+          "bottom": 208.59375
         },
         "preview": {
           "x": 713.859375,
-          "y": 168,
+          "y": 220.59375,
           "width": 492.265625,
           "height": 62,
           "right": 1206.125,
-          "bottom": 230
+          "bottom": 282.59375
         },
         "events": {
           "x": 24,
-          "y": 242,
+          "y": 294.59375,
           "width": 360,
-          "height": 588,
+          "height": 531.40625,
           "right": 384,
-          "bottom": 830
+          "bottom": 826
         },
         "recovery": {
           "x": 396,
-          "y": 334,
+          "y": 330,
           "width": 1500,
           "height": 520,
           "right": 1896,
-          "bottom": 854
+          "bottom": 850
         },
         "links": [
           {
@@ -1863,21 +1863,21 @@
           {
             "text": "Events 1",
             "height": 44,
-            "width": 90.09375,
+            "width": 130.28125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Recovery 4",
             "height": 44,
-            "width": 108.015625,
+            "width": 148.203125,
             "visible": true,
             "clickable": true
           },
           {
             "text": "Back to demo",
             "height": 44,
-            "width": 120.8125,
+            "width": 145.8125,
             "visible": true,
             "clickable": true
           }

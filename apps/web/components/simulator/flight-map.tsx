@@ -613,7 +613,7 @@ function LiveTrafficLayer({planes, selected, onSelect}: {planes:LiveFlight[];sel
     const draw=(time:number)=>{
       frame=0;if(document.hidden)return
       if(time-lastFrame<50){schedule();return}lastFrame=time
-      const size=map.getSize(),dpr=Math.min(devicePixelRatio,2), now=Date.now()/1000
+      const size=map.getSize(),dpr=Math.min(devicePixelRatio,2), now=Date.now()/1000, detailed=map.getZoom()>=7
       if(canvas.width!==size.x*dpr||canvas.height!==size.y*dpr){canvas.width=size.x*dpr;canvas.height=size.y*dpr;canvas.style.width=size.x+"px";canvas.style.height=size.y+"px"}
       ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,size.x,size.y);hits=[]
       let selectedFound=false, moving=false
@@ -636,8 +636,11 @@ function LiveTrafficLayer({planes, selected, onSelect}: {planes:LiveFlight[];sel
         if(now-30<track.last_contact&&track.fixes.length>1)moving=true
         hits.push({x:point.x,y:point.y,lf})
         if(lf.icao24===latest.current.selected)continue
-        ctx.save();ctx.translate(point.x,point.y);ctx.rotate((track.heading??0)*Math.PI/180);ctx.scale(16/64,16/64);ctx.translate(-32,-32)
-        ctx.globalAlpha=now-track.last_contact>60?.4:(lf.velocity_kt??0)<50?.55:.95;ctx.fillStyle=blue;ctx.fill(shape);ctx.restore()
+        ctx.save();ctx.translate(point.x,point.y)
+        ctx.globalAlpha=now-track.last_contact>60?.4:(lf.velocity_kt??0)<50?.55:.95;ctx.fillStyle=blue
+        if(detailed){ctx.rotate((track.heading??0)*Math.PI/180);ctx.scale(16/64,16/64);ctx.translate(-32,-32);ctx.fill(shape)}
+        else {ctx.beginPath();ctx.arc(0,0,1.5,0,Math.PI*2);ctx.fill()}
+        ctx.restore()
       }
       if(!selectedFound){marker?.remove();marker=null;selectedId=undefined;observed.setLatLngs([]);forecast.setLatLngs([])}
       canvas.dataset.contacts=String(hits.length)
@@ -1945,24 +1948,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
       >
         <MapResizeFix />
         <ZoomControl position="topright" />
-        {/* `dark_all`, not Positron — the console register's basemap.
-            The reasoning that chose Positron over Voyager is unchanged and is
-            why this is dark_all rather than a dark Voyager equivalent: the
-            basemap must spend NO saturation on road classes or landuse, so the
-            only chromatic things on the surface are the marks that carry
-            operational meaning. dark_all is that same cartographic restraint
-            inverted for the console floor.
-
-            `ae-basemap` (globals.css) trims the tiles' native brightness and
-            pushes them a few degrees toward the console's plum hue, so the map
-            reads as part of the panel it sits in rather than a black rectangle
-            pasted onto it. */}
-        {/* The tile SET follows the console theme, not just the CSS filter — a
-            filtered dark tile cannot become a light chart, and vice versa.
-            `key` forces Leaflet to tear the layer down and rebuild it on a
-            theme change; without it react-leaflet keeps the original layer and
-            only the url prop changes, which leaves every already-cached tile
-            from the previous theme on screen until it is panned out of view. */}
+        {/* OpenStreetMap supplies the basemap without a CARTO browser key. */}
         <TileLayer
           key={lightBasemap ? "light" : "dark"}
           className="ae-basemap"

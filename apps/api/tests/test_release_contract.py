@@ -62,3 +62,34 @@ def test_public_demo_rejects_excess_work_before_mutating_state(monkeypatch):
         assert client.get("/health").status_code == 200
         monkeypatch.setattr(app.state, "public_demo_busy", True, raising=False)
         assert client.post("/api/v1/simulator/reset").headers["Retry-After"] == "5"
+
+
+def test_runtime_key_loader_preserves_existing_config_on_failure(monkeypatch, tmp_path):
+    import importlib.util
+    import json
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    import pytest
+
+    script = Path(__file__).resolve().parents[3] / "infra/aws/load-secrets.py"
+    spec = importlib.util.spec_from_file_location("load_secrets", script)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    result = SimpleNamespace(
+        returncode=0, stdout=json.dumps({"Parameter": {"Value": "test.key"}}), stderr=""
+    )
+    monkeypatch.setattr(module.subprocess, "run", lambda *args, **kwargs: result)
+    target = tmp_path / "api.env"
+    module.load("us-east-1", target)
+    assert target.read_text() == "GEMINI_API_KEY=test.key\n"
+    result.stdout = json.dumps({"Parameter": {"Value": "bad\nINJECT=value"}})
+    with pytest.raises(ValueError):
+        module.load("us-east-1", target)
+    assert target.read_text() == "GEMINI_API_KEY=test.key\n"
+    result.returncode, result.stderr = 1, "AccessDenied"
+    with pytest.raises(RuntimeError):
+        module.load("us-east-1", target)
+    result.stderr = "ParameterNotFound"
+    module.load("us-east-1", target)
+    assert target.read_text() == "GEMINI_API_KEY=test.key\n"

@@ -42,9 +42,9 @@ try{
  }
  await page.getByRole('main').getByLabel('Theme').selectOption('light');
  await page.waitForFunction(()=>document.querySelector('[data-density][data-theme="light"]'));
- assert.equal(await page.getByLabel('Display name').evaluate(e=>getComputedStyle(e).color),'rgb(10, 14, 20)');
- assert.equal(await page.getByText('Account workspace',{exact:true}).locator('../..').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(247, 245, 241)');
- assert.equal(await page.getByLabel('Display name').evaluate(e=>getComputedStyle(e).getPropertyValue('--ink-600').trim()),'#ECE8E1');
+ assert.equal(await page.getByLabel('Display name').evaluate(e=>getComputedStyle(e).color),'rgb(24, 44, 48)');
+ assert.equal(await page.getByText('Account workspace',{exact:true}).locator('../..').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(245, 245, 241)');
+ assert.equal(await page.getByLabel('Display name').evaluate(e=>getComputedStyle(e).getPropertyValue('--ink-600').trim()),'#EAF0ED');
  await page.screenshot({path:join(evidence,'layout-1440-account-light.png')});
  await page.getByRole('main').getByLabel('Theme').selectOption('dark');
  await page.waitForFunction(()=>document.querySelector('[data-density][data-theme="dark"]'));

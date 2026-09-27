@@ -38,7 +38,8 @@ try {
  await page.screenshot({path:join(evidence,'layout-1440-demo-events.png')});
  const canvas=page.locator('canvas.olus-traffic-canvas');
  await page.waitForFunction(()=>Number(document.querySelector('canvas.olus-traffic-canvas')?.getAttribute('data-contacts'))>0);
- for(let i=0;i<4;i++)await page.getByRole('button',{name:'Zoom in',exact:true}).click();
+ for(let i=0;i<4;i++){await page.getByRole('button',{name:'Zoom in',exact:true}).click();await page.waitForTimeout(350)}
+ await page.waitForTimeout(500);
  await page.screenshot({path:join(evidence,'layout-1440-live-detail.png')});
  assert.ok(await canvas.isVisible(),'Live contacts remain available at detailed zoom');
  console.log('PASS: demo metric guard, copilot viewport bounds/input hit test/Escape/focus at four widths; no AI requests.');

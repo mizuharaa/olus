@@ -2,7 +2,7 @@
 import "leaflet/dist/leaflet.css"
 import { useEffect, useMemo, useRef, useState, useCallback, type CSSProperties } from "react"
 import {
-  MapContainer, TileLayer, Marker, Polyline, Circle, Pane,
+  MapContainer, TileLayer, Marker, Polyline, Circle, CircleMarker, Pane,
   Tooltip, ZoomControl, useMap, useMapEvents,
 } from "react-leaflet"
 import L from "leaflet"
@@ -143,8 +143,8 @@ const MAP_LIGHT = {
   planCancelled: "#C9CCC9",
   planCancelledGlyph: "#333935",
   planCancelledInk: "#5A625D",
-  planSwap:      "#17A874",
-  planSwapFlow:  "#17A874",
+  planSwap:      "#087F5B",
+  planSwapFlow:  "#087F5B",
   planDelayed:   "#C2560F",
 
   cascadeDirect: cascadeLight.direct.fill,
@@ -647,7 +647,10 @@ function LiveTrafficLayer({planes, selected, onSelect}: {planes:LiveFlight[];sel
       // Animation stays outside React; no whole-dashboard render per frame.
       if(moving&&!reduced.matches)schedule()
     }
-    const schedule=()=>{if(!frame&&!document.hidden)frame=requestAnimationFrame(draw)}
+    let zooming=false
+    const schedule=()=>{if(!frame&&!document.hidden&&!zooming)frame=requestAnimationFrame(draw)}
+    const zoomStart=()=>{zooming=true;cancelAnimationFrame(frame);frame=0;canvas.style.visibility="hidden";hits=[]}
+    const zoomEnd=()=>{zooming=false;canvas.style.visibility="visible";schedule()}
     const click=(e:L.LeafletMouseEvent)=>{
       if((e.originalEvent.target as Element)?.closest(".leaflet-marker-icon,.leaflet-interactive"))return
       let nearest:LiveFlight|undefined, distance=14*14
@@ -655,8 +658,8 @@ function LiveTrafficLayer({planes, selected, onSelect}: {planes:LiveFlight[];sel
       if(nearest)latest.current.onSelect(nearest)
     }
     const staleTimer=window.setInterval(schedule,5000)
-    redraw.current=schedule;map.on("move zoom resize",schedule);map.on("click",click);document.addEventListener("visibilitychange",schedule);reduced.addEventListener("change",schedule);schedule()
-    return()=>{clearInterval(staleTimer);cancelAnimationFrame(frame);map.off("move zoom resize",schedule);map.off("click",click);document.removeEventListener("visibilitychange",schedule);reduced.removeEventListener("change",schedule);observed.remove();forecast.remove();marker?.remove();canvas.remove();redraw.current=()=>{}}
+    redraw.current=schedule;map.on("zoomstart",zoomStart);map.on("zoomend moveend",zoomEnd);map.on("move resize",schedule);map.on("click",click);document.addEventListener("visibilitychange",schedule);reduced.addEventListener("change",schedule);schedule()
+    return()=>{clearInterval(staleTimer);cancelAnimationFrame(frame);map.off("zoomstart",zoomStart);map.off("zoomend moveend",zoomEnd);map.off("move resize",schedule);map.off("click",click);document.removeEventListener("visibilitychange",schedule);reduced.removeEventListener("change",schedule);observed.remove();forecast.remove();marker?.remove();canvas.remove();redraw.current=()=>{}}
   },[map])
   return null
 }
@@ -665,7 +668,6 @@ function BoundsTracker({ onBounds }: { onBounds: (b: L.LatLngBounds) => void }) 
   const map = useMap()
   useMapEvents({
     moveend: () => onBounds(map.getBounds()),
-    zoomend: () => onBounds(map.getBounds()),
   })
   useEffect(() => { onBounds(map.getBounds()) }, []) // eslint-disable-line react-hooks/exhaustive-deps
   return null
@@ -722,22 +724,36 @@ function MapResizeFix() {
 function FitBounds({ flights }: { flights: ScheduledFlight[] }) {
   const map = useMap()
   const done = useRef(false)
-  useEffect(() => {
-    if (done.current || !flights.length) return
-    const pts = flights.flatMap((f) => {
-      const o = NIMBUS_AIRPORTS[f.origin], d = NIMBUS_AIRPORTS[f.destination]
-      return [o, d].filter(Boolean) as { lat: number; lon: number }[]
-    })
+  const fit = useCallback(() => {
+    const pts = flights.flatMap(f => [NIMBUS_AIRPORTS[f.origin], NIMBUS_AIRPORTS[f.destination]]).filter(Boolean)
     if (!pts.length) return
-    map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lon])).pad(0.15), { animate: false })
-    done.current = true
-  }, [flights, map])
+    map.stop()
+    map.fitBounds(L.latLngBounds(pts.map(p => [p.lat,p.lon])), {padding:[40,40],animate:false})
+  }, [flights,map])
+  useEffect(() => { if (!done.current && flights.length) { fit();done.current=true } }, [flights,fit])
+  useEffect(() => {
+    const control = new L.Control({position:"topleft"})
+    control.onAdd = () => {
+      const button = L.DomUtil.create("button", "ae-fit-network")
+      button.type="button";button.textContent="Fit network";button.setAttribute("aria-label","Fit network")
+      Object.assign(button.style,{background:"#fff",color:"#183136",minHeight:"44px",padding:"0 14px",border:"1px solid #aebdb7",borderRadius:"6px",fontSize:"13px",fontWeight:"600"})
+      L.DomEvent.disableClickPropagation(button);L.DomEvent.disableScrollPropagation(button)
+      L.DomEvent.on(button,"click",fit)
+      return button
+    }
+    control.addTo(map)
+    return () => { control.remove() }
+  },[map,fit])
   return null
 }
 
 function FocusFlight({ target }: { target: ScheduledFlight | LiveFlight | null }) {
   const map = useMap()
+  const focused = useRef<string | null>(null)
   useEffect(() => {
+    const id = target ? ("icao24" in target ? target.icao24 : target.id) : null
+    if (id === focused.current) return
+    focused.current = id
     if (!target) return
     if ("icao24" in target) { map.flyTo([target.lat, target.lon], 9, { duration: 0.8 }); return }
     const o = NIMBUS_AIRPORTS[(target as ScheduledFlight).origin]
@@ -1019,7 +1035,7 @@ function FlightDetailCard({
   // line/marker on the map read as the same semantic state at a glance.
   if (isPlanCancelled)     { actionLabel = "Cancelled by recovery plan"; actionColor = MAP_COLORS.planCancelledInk; actionIcon = "✕" }
   else if (isCascadeCancelled){ actionLabel = "Grounded by disruption"; actionColor = MAP_COLORS.cascadeDirect; actionIcon = "✕" }
-  else if (isSwapped)      { actionLabel = "Re-routed · new aircraft assigned"; actionColor = MAP_COLORS.planSwap; actionIcon = "↕" }
+  else if (isSwapped)      { actionLabel = "Aircraft reassigned"; actionColor = MAP_COLORS.planSwap; actionIcon = "↕" }
   else if (planDelay)      { actionLabel = `Delayed +${planDelay} min by plan`; actionColor = MAP_COLORS.planDelayed; actionIcon = "⏱" }
   else if (cascOrder === 0){ actionLabel = "Direct impact — epicenter"; actionColor = MAP_COLORS.cascadeDirect; actionIcon = "⚡" }
   else if (cascOrder > 0)  { actionLabel = `Cascade order ${cascOrder}`; actionColor = MAP_COLORS.cascadeOrder1; actionIcon = "↗" }
@@ -1316,7 +1332,7 @@ function AirportPanel({ icao, faa, hasWx, wxText, simAffected, onClose }: {
   if (!ap) return null
   return (
     <div
-      className="absolute top-12 right-14 z-[450] w-64 rounded-xl overflow-hidden"
+      className="absolute top-16 left-3 z-[450] w-64 rounded-xl overflow-hidden"
       style={{
         background: GLASS_STRONG,
         backdropFilter: "blur(16px)",
@@ -1583,32 +1599,12 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
     }
   }, [visualPlanId, recoveryPlans])
 
-  // Visual cancellation set — union of:
-  //
-  //   (a) `applied.cancelled` — the currently-selected plan's own list (fast
-  //        optimistic update when the operator switches plans);
-  //
-  //   (b) every flight backend-marked status="cancelled" THAT IS NOT STAMPED
-  //        WITH A DIFFERENT PLAN'S applied_plan_id.
-  //
-  // Clause (b) is the critical filter. After applying Plan A, flight_states
-  // entries for A's cancelled flights carry `status="cancelled"` AND
-  // `applied_plan_id="A"`. When the operator clicks Plan B, the FRONTEND
-  // optimistically flips visualPlanId to "B" before the WS broadcast
-  // arrives. Without the filter, those Plan-A-stamped flights stay in the
-  // visuallyCancelled set during the gap — the map shows Plan A's grey
-  // lines PLUS Plan B's grey lines, so the switch reads as "nothing
-  // changed". With the filter, anything stamped by Plan A is excluded the
-  // instant visualPlanId moves to "B" (it'll be restored by the snapshot
-  // revert on the backend anyway, so we're just front-running that revert).
-  //
-  // Cascade-cancelled flights (no `applied_plan_id` at all) are always
-  // included — they're genuinely not operating regardless of plan choice.
+  // Previewed recovery actions override the disrupted baseline, as apply_plan does.
   const visuallyCancelled = useMemo(() => {
     const set = new Set<string>(applied.cancelled)
     for (const fid in flightStates) {
       const s = flightStates[fid]
-      if (s?.status !== "cancelled") continue
+      if (s?.status !== "cancelled" || applied.delayed.has(fid)) continue
       const stampedBy = s.applied_plan_id ?? null
       // Include if: cascade-cancelled (no stamp) OR stamped by the plan we
       // currently have selected. Exclude if stamped by a stale plan.
@@ -1617,7 +1613,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
       }
     }
     return set
-  }, [applied.cancelled, flightStates, visualPlanId])
+  }, [applied, flightStates, visualPlanId])
 
   const activePlan = visualPlanId ? recoveryPlans.find((p: RecoveryPlan) => p.plan_id === visualPlanId) ?? null : null
 
@@ -1687,7 +1683,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
       const isCancelled = visuallyCancelled.has(f.id)
       const isSwap      = applied.swap.has(f.id)
       const isDelayed   = applied.delayed.has(f.id)
-      const isAffected  = state && (state.cascade_order >= 0 || isCancelled || isDelayed || isSwap)
+      const isAffected  = (state?.cascade_order ?? -1) >= 0 || isCancelled || isDelayed || isSwap
       if (!isAffected) continue
       const o = NIMBUS_AIRPORTS[f.origin], d = NIMBUS_AIRPORTS[f.destination]
       if (!o || !d) continue
@@ -1702,7 +1698,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
                       "cascade"
 
       const color =
-        kind === "cancelled" ? MAP_COLORS.planCancelled :
+        kind === "cancelled" ? MAP_COLORS.planCancelledInk :
         kind === "swap"      ? MAP_COLORS.planSwap :
         kind === "delayed"   ? MAP_COLORS.planDelayed :
                                 cascColor(f.id, state)
@@ -1711,16 +1707,16 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
       // they remain clickable, but lower weight + opacity so live re-routes
       // visually dominate.
       const weight =
-        kind === "cancelled" ? (sel ? 3 : 1.6) :
+        kind === "cancelled" ? (sel ? 4 : 2.5) :
         kind === "swap"      ? (sel ? 4 : 3.2) :   // a touch heavier so the new route reads as primary
         sel                  ? 4 :
-        state?.cascade_order === 0 ? 2.5 : 2
+        state?.cascade_order === 0 ? 3.5 : 3
 
       const opacity =
-        kind === "cancelled" ? (sel ? 0.65 : 0.35) :
+        kind === "cancelled" ? (sel ? 1 : 0.8) :
         kind === "swap"      ? (sel ? 1.0  : 0.92) :
         sel                  ? 1 :
-        state?.cascade_order === 0 ? 0.85 : 0.60
+        state?.cascade_order === 0 ? 1 : 0.9
 
       routes.push({
         id: f.id,
@@ -1738,7 +1734,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
       ids.add(f.id)
     }
     return { impactRoutes: routes, impactIds: ids }
-  }, [flightStates, schedule, selectedFlight, applied]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [flightStates, schedule, selectedFlight, applied, visuallyCancelled, lightBasemap]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // `applyEpoch` increments every time the applied-action sets change OR
   // the visual cancellation set grows (cascade-cancelled flights arriving
@@ -1964,19 +1960,13 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
         <FitBounds flights={schedule} />
         <FocusFlight target={focusTarget} />
 
-        {/* Event epicenter — 3 concentric rings for visual depth */}
-        {hasActiveEvents && Array.from(simEvtAirports).flatMap((icao) => {
+        {/* Mark the affected airport without inventing a geographic impact radius. */}
+        {showSimulation && hasActiveEvents && Array.from(simEvtAirports).map(icao => {
           const ap = NIMBUS_AIRPORTS[icao]
-          if (!ap) return []
-          const c: [number, number] = [ap.lat, ap.lon]
-          return [
-            <Circle key={`ep0-${icao}`} center={c} radius={70_000}
-              pathOptions={{ color: MAP_COLORS.eventEpicenter, weight: 2.5, opacity: 0.70, fillColor: MAP_COLORS.eventEpicenter, fillOpacity: 0.10 }} />,
-            <Circle key={`ep1-${icao}`} center={c} radius={160_000}
-              pathOptions={{ color: MAP_COLORS.eventEpicenter, weight: 1.5, opacity: 0.40, fillColor: MAP_COLORS.eventEpicenter, fillOpacity: 0.05, dashArray: "6 5" }} />,
-            <Circle key={`ep2-${icao}`} center={c} radius={300_000}
-              pathOptions={{ color: MAP_COLORS.eventEpicenter, weight: 1, opacity: 0.18, fillColor: MAP_COLORS.eventEpicenter, fillOpacity: 0.02, dashArray: "3 9" }} />,
-          ]
+          return ap ? <CircleMarker key={`event-${icao}`} center={[ap.lat,ap.lon]} radius={22}
+            pathOptions={{color: MAP_COLORS.eventEpicenter,weight:3,fillOpacity:0.08}}>
+            <Tooltip>{icao}: active disruption</Tooltip>
+          </CircleMarker> : null
         })}
 
         {/* Background Nimbus routes (unaffected). Hidden during an active
@@ -2014,7 +2004,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
           remain CLICKABLE so the user can still drill into a cancelled
           flight. The cursor stays pointer per Leaflet defaults.
         */}
-        {impactRoutes.map((r) => {
+        {showSimulation && impactRoutes.map((r) => {
           const className =
             r.kind === "swap"      ? "ae-route ae-route-flow" :
             r.kind === "cancelled" ? "ae-route ae-route-cancelled" :
@@ -2027,7 +2017,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
                                      undefined
           return (
             <Polyline
-              key={`imp-${applyEpoch}-${r.id}`}
+              key={`imp-${r.id}`}
               positions={[r.from, r.to]}
               pathOptions={{
                 color:     r.color,
@@ -2037,7 +2027,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
                 className,
               }}
               eventHandlers={{ click: () => onFlightSelect(selectedFlight === r.id ? null : r.id) }}
-            />
+            ><Tooltip>{r.id}: {r.kind === "swap" ? "Aircraft reassigned" : r.kind === "cascade" ? "Disruption affected" : r.kind}</Tooltip></Polyline>
           )
         })}
 
@@ -2116,19 +2106,19 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
               { click: () => { setSelAirport(selAirport === id ? null : id); onFlightSelect(null); setSelectedLiveFlight(null) } },
             )}
           >
-            <Tooltip direction="top" offset={[0, -14]} opacity={1}>
+            <Tooltip permanent={externalFeed && (airportTier(id) !== "spoke" || mapZoom >= 6)} direction="top" offset={[0, -10]} opacity={1} className={externalFeed ? "olus-airport-label" : undefined}>
               <div>
-                <div className="font-mono font-bold text-xs">{ap.iata} · {id}</div>
-                <div className="text-[11px] text-muted-foreground">{ap.name}, {ap.city}</div>
-                {airportFAA[id] && (
+                <div className="font-mono font-bold text-xs">{externalFeed ? ap.iata : `${ap.iata} / ${id}`}</div>
+                {!externalFeed && <div className="text-[11px] text-muted-foreground">{ap.name}, {ap.city}</div>}
+                {!externalFeed && airportFAA[id] && (
                   <div className="text-[11px] font-semibold mt-0.5" style={{ color: airportFAA[id].type === "ground_stop" ? "var(--ae-rust-ink)" : "var(--ae-amber-ink)" }}>
                     {airportFAA[id].type === "ground_stop" ? "Ground stop"
                       : airportFAA[id].type === "ground_delay_program" ? `GDP +${airportFAA[id].delay_minutes}m`
                       : `+${airportFAA[id].delay_minutes}m dep delay`}
                   </div>
                 )}
-                {id in wxAirports && <div className="text-[11px]" style={{ color: "var(--ae-amber-ink)" }}>WX alert</div>}
-                {simEvtAirports.has(id) && <div className="text-[11px] font-semibold" style={{ color: "var(--ae-rust-ink)" }}>Disruption epicenter</div>}
+                {!externalFeed && id in wxAirports && <div className="text-[11px]" style={{ color: "var(--ae-amber-ink)" }}>WX alert</div>}
+                {!externalFeed && simEvtAirports.has(id) && <div className="text-[11px] font-semibold" style={{ color: "var(--ae-rust-ink)" }}>Disruption epicenter</div>}
               </div>
             </Tooltip>
           </Marker>
@@ -2147,6 +2137,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
           const isCancelled = visuallyCancelled.has(id)
           const isSwap      = applied.swap.has(id)
           const cascOrder = state?.cascade_order ?? -1
+          const delay = applied.delayed.get(id) ?? state?.delay_minutes ?? 0
           return (
             <Marker
               key={`sim-${applyEpoch}-${id}`}
@@ -2173,7 +2164,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
                   : cascOrder === 1 ? "First-order cascade"
                   : cascOrder >= 2 ? "Second-order cascade"
                   : "On time"
-                }${isSwap ? ", aircraft swapped" : ""}${state?.delay_minutes ? `, delayed ${state.delay_minutes} minutes` : ""}`,
+                }${isSwap ? ", aircraft swapped" : ""}${delay ? `, delayed ${delay} minutes` : ""}`,
                 { click: () => onFlightSelect(sel ? null : id) },
               )}
             >
@@ -2181,7 +2172,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
                 <div>
                   <div className="font-mono font-bold text-xs">{id} <span className="text-[11px] font-semibold" style={{ color: "var(--ae-text-3)" }}>[SIM]</span></div>
                   <div className="text-[11px] text-muted-foreground">{f.aircraft_id} · {f.origin} → {f.destination}</div>
-                  {state?.delay_minutes > 0 && <div className="text-[11px] font-semibold" style={{ color: "var(--ae-amber-ink)" }}>+{state.delay_minutes} min delay</div>}
+                  {delay > 0 && <div className="text-[11px] font-semibold" style={{ color: "var(--ae-amber-ink)" }}>+{delay} min delay</div>}
                   {state?.cascade_order === 0 && !isCancelled && <div className="text-[11px] font-semibold" style={{ color: "var(--ae-rust-ink)" }}>Direct impact</div>}
                   {isCancelled && (
                     <div className="text-[11px] font-bold" style={{ color: MAP_COLORS.planCancelledInk }}>
@@ -2190,7 +2181,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
                   )}
                   {isSwap && (
                     <div className="text-[11px] font-bold" style={{ color: MAP_COLORS.planSwap }}>
-                      ↕ Re-routed · new aircraft assigned
+                      ↕ Aircraft reassigned
                     </div>
                   )}
                 </div>
@@ -2507,7 +2498,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: MAP_COLORS.planSwap, boxShadow: `0 0 0 2px ${MAP_COLORS.planSwap}40` }} />
-                        <span className="text-muted-foreground">Re-routed</span>
+                        <span className="text-muted-foreground">Aircraft reassigned</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className="w-3.5 h-3.5 rounded-full shrink-0" style={{ background: MAP_COLORS.planDelayed }} />

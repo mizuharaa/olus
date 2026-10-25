@@ -1,3 +1,13 @@
+## Approved operations composition (2026-10-25)
+
+User approved draft 1's sidebar/map structure with draft 2's visual organization. Keep the primary map and recovery choices side by side; use flat plan rows, tabular dollar amounts, and a separate horizontal route key. Comparison uses aligned financial columns. Remove duplicate summary numbers, slogan headings, decorative card stacking, and oversized letter badges. Extra Mobbin pass: Quicken's persistent account sidebar, YNAB's financial row alignment, Midday's compact controls. Preserve explicit preview versus apply behavior and existing backend values. Generated examples are composition references only, never runtime data or map geometry.
+
+## Operations clarity repair (2026-10-25)
+
+Preserve Olus's teal ink, warm white surfaces and existing brand. Dock recovery choices and actual dollar totals beside the map; reserve a separate header and timeline so controls cannot cover routes. Mobile stacks decisions and a usable map, with detail sheets above them. Preview never applies a plan. Costs come from the existing recovery ledger. Use labeled, distinct strokes for scheduled, delayed, reassigned and cancelled flights; aircraft reassignment is not a geographic reroute. Remove geographic impact rings with no data basis and expensive map filters. Keep keyboard controls and explicit financial review/apply steps.
+
+References inspected through Mobbin: [Komoot](https://mobbin.com/screens/0bea83ef-0d4b-416a-acae-a73f781b1bbf), [Uber](https://mobbin.com/screens/99d58d29-faef-4260-9e4a-91471d222bc6). Their useful structure is a dedicated decision pane beside an unobstructed map.
+
 # Design — Olus
 
 ## Current operator direction: Clear dispatch workspace (2026-09-27)

@@ -1,3 +1,9 @@
+## Map-first operations revision (2026-10-26)
+
+The user rejected the permanent sidebar and stacked bottom bars after viewing the actual build. This supersedes the October 25 composition below. Keep one compact operations toolbar and let the map fill the remaining workspace. Recovery opens in a bounded overlay with consistently aligned costs; financial comparison and timeline remain on demand. Use the existing Layers & key control on desktop and mobile. Preview state stays visible after closing recovery, and preview never applies a plan. Preserve API behavior and all existing safety boundaries.
+
+Fresh Mobbin MCP references inspected: [Felt](https://mobbin.com/screens/759f5753-bdd5-414f-9705-a0558a1a765b) for its full map and thin toolbar; [PamPam](https://mobbin.com/screens/7dd19ac3-7d0f-4e04-b22a-09dde457bb32) for a bounded overlay over the map. Apply their information hierarchy, not their branding or data. Keep Olus teal, warm surfaces, readable text and semantic route colors. No new dependencies.
+
 ## Approved operations composition (2026-10-25)
 
 User approved draft 1's sidebar/map structure with draft 2's visual organization. Keep the primary map and recovery choices side by side; use flat plan rows, tabular dollar amounts, and a separate horizontal route key. Comparison uses aligned financial columns. Remove duplicate summary numbers, slogan headings, decorative card stacking, and oversized letter badges. Extra Mobbin pass: Quicken's persistent account sidebar, YNAB's financial row alignment, Midday's compact controls. Preserve explicit preview versus apply behavior and existing backend values. Generated examples are composition references only, never runtime data or map geometry.

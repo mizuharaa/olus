@@ -2114,7 +2114,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
               { click: () => { setSelAirport(selAirport === id ? null : id); onFlightSelect(null); setSelectedLiveFlight(null) } },
             )}
           >
-            <Tooltip permanent={externalFeed && (airportTier(id) !== "spoke" || mapZoom >= 6)} direction="top" offset={[0, -10]} opacity={1} className={externalFeed ? "olus-airport-label" : undefined}>
+            <Tooltip permanent={externalFeed && !(focusMode && selectedSched && (id === selectedSched.origin || id === selectedSched.destination)) && (airportTier(id) !== "spoke" || mapZoom >= 6)} direction="top" offset={[0, -10]} opacity={1} className={externalFeed ? "olus-airport-label" : undefined}>
               <div>
                 <div className="font-mono font-bold text-xs">{externalFeed ? ap.iata : `${ap.iata} / ${id}`}</div>
                 {!externalFeed && <div className="text-[11px] text-muted-foreground">{ap.name}, {ap.city}</div>}

@@ -581,7 +581,15 @@ function airportIcon(tier: AirportTier, faa: FAAStatus | undefined, hasWx: boole
 // ── Map sub-components ─────────────────────────────────────────────────────────
 
 function ZoomTracker({ onZoom }: { onZoom: (z: number) => void }) {
-  useMapEvents({ zoomend: (e) => onZoom(e.target.getZoom()) })
+  const map = useMapEvents({ zoomend: (e) => onZoom(e.target.getZoom()) })
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("benchmark") !== "zoom") return
+    let disposed = false, stop: (() => void) | undefined
+    void import("@/lib/zoom-benchmark").then(({ observeZoom }) => {
+      if (!disposed) stop = observeZoom(map)
+    })
+    return () => { disposed = true; stop?.() }
+  }, [map])
   return null
 }
 

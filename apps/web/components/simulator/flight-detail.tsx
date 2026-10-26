@@ -126,8 +126,7 @@ export function FlightDetailPanel({
   if (!body) return null
 
   const title = live
-    ? [live.callsign?.trim() || live.icao24.toUpperCase(), live.flight_iata, live.flight_icao]
-        .filter(Boolean).join(", ")
+    ? live.callsign?.trim() || live.flight_iata || live.flight_icao || live.icao24.toUpperCase()
     : scheduled!.flight_number || scheduled!.id
 
   return (

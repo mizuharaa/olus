@@ -1,0 +1,22 @@
+.panel { display: flex; flex-direction: column; height: 100%; min-height: 0; overflow: hidden; border-radius: inherit; color: var(--ae-text); }
+.header { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding: 12px 16px; border-bottom: 1px solid var(--ae-line); }
+.header h2 { flex: 1; min-width: 0; margin: 0; font: 600 20px/28px Inter,sans-serif; overflow-wrap: anywhere; }
+.header button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 44px; min-height: 44px; padding: 8px; border: 0; background: transparent; color: inherit; border-radius: 4px; font-size: 12px; }
+/* Normal block flow keeps route and aircraft content from shrinking inside the scroll region. */
+.body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; }
+.body > * { margin-bottom: 20px; }
+.body > :last-child { margin-bottom: 0; }
+.status { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; font: 13px/20px Inter,sans-serif; }
+.status span { color: var(--ae-text-2); font-size: 12px; }
+.route { display: flex; align-items: stretch; gap: 12px; border-bottom: 1px solid var(--ae-line); padding-bottom: 12px; }
+.route > :last-child { text-align: right!important; }
+.facts { display: grid; grid-template-columns: minmax(0,1fr); }
+.fact { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; min-width: 0; padding: 10px 0; border-bottom: 1px solid var(--ae-line); line-height: 20px; }
+.schedule { border-collapse: collapse; width: 100%; font: 13px/20px Inter,sans-serif; font-variant-numeric: tabular-nums; }
+.schedule th, .schedule td { padding: 10px 0; text-align: right; border-bottom: 1px solid var(--ae-line); }
+.schedule th:first-child { text-align: left; }
+.schedule th { font-weight: 500; color: var(--ae-text-2); }
+.schedule td { font-weight: 600; }
+.schedule thead { font-size: 12px; }
+.aircraft { border-top: 1px solid var(--ae-line); }
+.aircraft summary { cursor: pointer; font-size: 13px; min-height: 44px; padding: 12px 0; }

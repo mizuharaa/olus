@@ -1,0 +1,53 @@
+{
+  "deployment": "olus-501gmespr",
+  "viewport": {
+    "width": 1440,
+    "height": 812,
+    "dpr": 2
+  },
+  "status": "inconclusive: one-second frame gaps under browser automation; third expected sample did not arrive; foreground status not confirmed",
+  "samples": [
+    {
+      "fromZoom": 4,
+      "toZoom": 5,
+      "inputDelayMs": 932.8999999999069,
+      "zoomDurationMs": 295.29999999981374,
+      "timedOut": false,
+      "frameGapsMs": [
+        46.5,
+        28.5,
+        34.200000000186265,
+        15.799999999813735,
+        33.200000000186265,
+        25,
+        33.299999999813735,
+        33.700000000186265,
+        50.39999999990687,
+        42.799999999813735,
+        259.5
+      ],
+      "p95FrameGapMs": 259.5,
+      "maxFrameGapMs": 259.5,
+      "framesOver50Ms": 2,
+      "hidden": false,
+      "liveContacts": 7194,
+      "trafficVisible": true
+    },
+    {
+      "fromZoom": 5,
+      "toZoom": 4,
+      "inputDelayMs": 112.40000000037253,
+      "zoomDurationMs": 283.5,
+      "timedOut": false,
+      "frameGapsMs": [
+        1023.5999999996275
+      ],
+      "p95FrameGapMs": 1023.5999999996275,
+      "maxFrameGapMs": 1023.5999999996275,
+      "framesOver50Ms": 1,
+      "hidden": false,
+      "liveContacts": 7194,
+      "trafficVisible": true
+    }
+  ]
+}

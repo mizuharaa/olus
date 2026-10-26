@@ -1681,8 +1681,8 @@ html[data-console-theme="dark"] .simulator-shell .leaflet-container {
    rather than as a stray label. */
 .ae-map-legend > summary { list-style: none; }
 .ae-map-legend > summary::-webkit-details-marker { display: none; }
-.ae-map-legend > summary::after { content: "▲"; font-size: 7px; opacity: 0.55; }
-.ae-map-legend[open] > summary::after { content: "▼"; }
+.ae-map-legend > summary::after { content: ""; width: 7px; height: 7px; border-top: 2px solid currentColor; border-right: 2px solid currentColor; transform: translateY(2px) rotate(-45deg); }
+.ae-map-legend[open] > summary::after { transform: translateY(-2px) rotate(135deg); }
 .ae-map-legend > summary:hover { border-color: var(--ae-line-strong) !important; }
 
 /* Collapsed side-panel launcher — a full-height edge rail whose content sits at

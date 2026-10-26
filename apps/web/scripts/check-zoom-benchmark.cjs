@@ -54,6 +54,12 @@ assert.equal(timedOut.timedOut, true)
 assert.equal(timedOut.hidden, true)
 assert.equal(timedOut.zoomDurationMs, null)
 assert.equal(frames.size, 0)
+container.querySelector = () => null
+document.hidden = false
+inputs.get('click')({ type: 'click', target: { closest: () => true } })
+callbacks.get('zoomstart')()
+advance(16); callbacks.get('zoomend moveend')(); advance(100)
+assert.equal(JSON.parse(output.textContent)[2].trafficVisible, false, 'absent traffic canvas means traffic is off')
 stop()
 assert.equal(callbacks.size, 0); assert.equal(inputs.size, 0); assert.equal(removed, true)
 console.log('PASS: zoom timing, slow frames, hidden-tab invalidation, timeout and cleanup')

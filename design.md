@@ -1,3 +1,7 @@
+## Flight inspector correction (2026-10-26)
+
+Fresh Mobbin MCP reference: [KAYAK flight tracker](https://mobbin.com/screens/6bcc82eb-d4a3-4917-917d-ca105eb006fb). Use its clear identifier, status and flat departure/arrival rows. Remove decorative aircraft plates and nested fact cards. Keep a full-width map with an on-demand inspector. The inspector body must scroll without shrinking route content. Merge expand and close into its header. Show recorded values, cancellation dashes and explicit inferred live endpoints unchanged. The optional 3D view mounts only when opened. Remove the inert Centre action; selecting a flight already focuses the map, and Fit network remains available.
+
 ## Map-first operations revision (2026-10-26)
 
 The user rejected the permanent sidebar and stacked bottom bars after viewing the actual build. This supersedes the October 25 composition below. Keep one compact operations toolbar and let the map fill the remaining workspace. Recovery opens in a bounded overlay with consistently aligned costs; financial comparison and timeline remain on demand. Use the existing Layers & key control on desktop and mobile. Preview state stays visible after closing recovery, and preview never applies a plan. Preserve API behavior and all existing safety boundaries.

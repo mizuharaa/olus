@@ -26,7 +26,7 @@ export function observeZoom(map: LeafletMap) {
         zoomDurationMs: endedAt ? endedAt - startedAt : null, timedOut: !endedAt, frameGapsMs: gaps,
         p95FrameGapMs: sorted[Math.ceil(sorted.length * .95) - 1], maxFrameGapMs: sorted.at(-1),
         framesOver50Ms: gaps.filter(n => n > 50).length, hidden,
-        liveContacts: Number(canvas?.dataset.contacts ?? 0), trafficVisible: !canvas || canvas.style.visibility !== "hidden" })
+        liveContacts: Number(canvas?.dataset.contacts ?? 0), trafficVisible: !!canvas && canvas.style.visibility !== "hidden" })
       if (samples.length > 100) samples.shift()
       output.textContent = JSON.stringify(samples)
       output.dataset.samples = String(samples.length)

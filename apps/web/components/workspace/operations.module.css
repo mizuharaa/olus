@@ -60,9 +60,10 @@
 .events :global([cmdk-item][data-selected=true]) { outline: none; background: var(--ae-surface-3)!important; box-shadow: none; }
 .events :global([cmdk-group-heading]) { background: transparent!important; border: 0!important; padding: 16px 12px 8px!important; font: 600 13px/20px Inter,sans-serif!important; letter-spacing: normal!important; text-transform: none!important; color: var(--secondary)!important; }
 .inspector { grid-column: 1; justify-self: end; width: min(var(--inspector-width,420px),calc(100% - 24px)); overflow: auto; margin: 12px; }
+.inspector { padding: 0; overflow: visible; }
 .inspector > section { height: auto!important; flex: 1; min-height: 0!important; }
 .inspector > section > header { flex-shrink: 0; }
-.inspector :is(p,span,button,dt,dd) { font-size: 14px; }
+
 .note { font-size: 13px!important; color: var(--secondary); }
 .comparison { grid-column: 1; grid-row: 2; align-self: end; height: min(var(--recovery-height,520px),calc(100% - 24px)); max-height: calc(100% - 24px); margin: 12px; padding: 12px; display: flex; flex-direction: column; }
 .comparison > div:has(> [aria-label="Recovery plan comparison"]) { flex: 1; min-height: 0; height: auto!important; }
@@ -125,7 +126,7 @@
 .windowActions { display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; }
 .windowActions button { min-width: 44px; min-height: 44px; border-radius: 6px; }
 .events > [role=separator], .inspector > [role=separator] { position: absolute!important; top: 0; right: 0; margin: 0!important; }
-.inspector > [role=separator] { right: auto; left: 0; }
+.inspector > [role=separator] { right: auto; left: -12px; }
 .events > div:not(.windowActions) { flex: 1; min-height: 0; }
 .events :is(input,select) { min-height: 44px; }
 .events form label { text-transform: none; letter-spacing: normal; }

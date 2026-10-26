@@ -154,11 +154,11 @@
 @media (max-width: 760px) {
  .console { container-type: normal; }
  .toolbar { flex-wrap: wrap; padding: 6px 8px; gap: 4px; }
- .identity { flex: 1; }
+ .identity { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
  .identity h1 { font-size: 16px; }
  .toolbar > button { font-size: 12px; padding-inline: 8px; }
  .toolbar > button svg { display: none; }
- .toolbar > .reset { width: 32px; }
+ .toolbar > .reset { width: 44px; }
  .toolbar > .reset svg { display: block; }
  .search { order: 1; flex-basis: 100%; max-width: none; margin: 0; }
  .decisionRail, .events, .inspector { width: calc(100% - 16px); max-height: calc(100% - 16px); margin: 8px; padding: 12px; }

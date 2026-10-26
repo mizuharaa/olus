@@ -1,3 +1,13 @@
+# Map legend follow-up (October 26)
+
+Production frontend is now `f8a0d98`, deployment `dpl_Ai4woPaprXpHdbFyvhDo6oK8FTXf` on olus.sh. Fixed summary padding overridden by generic workspace styling (observed10px0), tiny uppercase tracking, and popup centering that put its left edge at-122.8px. Removed obsolete positioning comments. The panel is left-aligned, text is13px, trigger is14px with12px horizontal padding and44px height. Native details/summary and a visible chevron preserve keyboard operation. Short-screen panel height uses the actual map container, reserving88px for offsets; narrow-phone footer width reserves space for the trigger.
+
+Observed release checks: desktop1440x812 popup left12/right372, phone390x844 left12/right370, narrow320x700 left12/right300. No document horizontal overflow. At844x390 landscape, map top162, popup top174/bottom284, clientHeight108 vs scrollHeight323: content scrolls within the map. Enter closed; Space opened; Tab reached the first layer control. Public domain confirmed14px Inter,10px12px padding and44px target after promotion. A final cropped production screenshot capture timed out; geometry verification succeeded. Existing inspector screenshots below predate this legend correction.
+
+Executed: type-check exit0, lint exit0 with six existing warnings, check-flight-controls and check-operations-clarity exit0, Impeccable layout scan empty. Final Vercel production build Ready and promotion exit0. No new dependencies or changes to map data/seed/apply handlers. Zoom performance remains unverified as documented below.
+
+---
+
 # October 26 production revision
 
 Deployed frontend commit `f0d0dcc` to `https://olus.sh/app/overview` through Vercel deployment `dpl_5cPgdQPLNjpo4DSAKoaHTpJd1HoJ`. Promotion exited 0. Public-domain browser verification found the new compact toolbar and NB202 inspector with scheduled 20:55Z / 23:30Z and revised 21:18Z / 23:53Z. Backend deployment and production data changes were not part of this release.

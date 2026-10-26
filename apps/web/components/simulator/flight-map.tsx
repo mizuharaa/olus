@@ -2269,72 +2269,36 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
         />
       )}
 
-      {/* Layer toggles — bottom-LEFT (the bottom-right is owned by the fixed
-          Ask-Olus bubble; keeping them apart avoids the overlap). */}
-      {/* Legend — bottom-CENTRE, and centred for a specific reason: the two
-          floating panels are inset from the left and right map edges at z-640,
-          either can be open, and the legend sits at z-400. Bottom-left put it
-          under Events (which opens by default, so the key to the map's whole
-          encoding was invisible on load); bottom-right put it under Recovery
-          (which auto-opens the moment plans arrive). The centre lane is the
-          only horizontal band both panels leave clear.
-          Opaque, not glass: a blurred panel over tiles ranging from pale land
-          to mid-blue water gave its own labels a contrast ratio that changed
-          with whatever happened to be underneath. */}
+      {/* Native disclosure keeps the map clear and remains keyboard operable. */}
       <details
         className="ae-map-legend absolute z-[400] hidden sm:block"
-        style={{ bottom: 12, left: "50%", transform: "translateX(-50%)" }}
+        style={{ bottom: 12, left: 12 }}
       >
-        {/* A <details> rather than an always-open card, for two reasons: a
-            16-item key permanently occupying the map is clutter on a surface
-            where every element has to earn its pixel, and collapsed it cannot
-            collide with either floating panel no matter which is open. Native
-            element, so the disclosure is keyboard-operable and announced
-            without any JS or ARIA of ours. Opens upward via bottom-anchoring. */}
         <summary
-          className="px-3 rounded-lg text-[11px] font-semibold uppercase"
           style={{
-            background: "var(--ae-surface)", border: "1px solid var(--ae-line)",
-            boxShadow: "var(--ae-shadow-card)", color: "var(--ae-text-2)",
-            letterSpacing: "0.14em", fontFamily: "var(--ae-font-mono)",
-            minHeight: 28, display: "inline-flex", alignItems: "center", gap: 6,
-            cursor: "pointer", listStyle: "none", width: "fit-content", margin: "0 auto",
+            background: "var(--ae-surface)", border: "1px solid var(--ae-line-strong)",
+            color: "var(--ae-text)", borderRadius: 6,
+            font: "600 14px/20px Inter, sans-serif", letterSpacing: "normal",
+            minHeight: 44, padding: "10px 12px", display: "inline-flex", alignItems: "center", gap: 12,
+            cursor: "pointer", listStyle: "none", width: "fit-content", whiteSpace: "nowrap",
           }}
         >
           Layers &amp; key
         </summary>
         <div
-          className="px-3 py-2 rounded-lg text-[11px]"
           style={{
-            position: "absolute", bottom: 34, left: "50%", transform: "translateX(-50%)",
-            // 360px caps the opened panel inside the ~432px lane the two
-            // floating panels leave clear at 1280; wider and its right edge
-            // slid under Recovery, which outranks it in z-order. It wraps.
-            width: "max-content", maxWidth: 360,
-            // Holds layers AND key now, and the map is a 300px locator, so the
-            // opened panel has to be bounded or it runs past the map's top edge
-            // and under the search bar.
-            // 186, not 236. The map is capped at 300px and the search bar owns
-            // y72-116 across the centre; a panel expanding upward from
-            // bottom:12 with maxHeight 236 reached y=78 and put its first key
-            // row under the search at EVERY viewport (measured 233x38, or
-            // 316x38 during a disruption). 186 lands its top at ~162, clear of
-            // the band. Both are centred on the same narrow map, so height is
-            // the only lever that works at all widths.
-            maxHeight: 186, overflowY: "auto",
-            background: "var(--ae-surface)", border: "1px solid var(--ae-line)", boxShadow: "var(--ae-shadow-card-elev)",
+            position: "absolute", bottom: 52, left: 0,
+            width: 360, maxWidth: "calc(100vw - 24px)", padding: 12, borderRadius: 6,
+            maxHeight: "min(480px, 60vh)", overflowY: "auto", overscrollBehavior: "contain",
+            font: "400 13px/20px Inter, sans-serif", color: "var(--ae-text)",
+            background: "var(--ae-surface)", border: "1px solid var(--ae-line-strong)",
+            boxShadow: "var(--ae-shadow-card-elev)",
           }}
         >
-          {/* Map LAYERS live here too, not in their own floating stack. As a
-              separate cluster they needed a lane of their own, and on a 300px
-              locator there is no free lane left: bottom-left collided with the
-              disruption card by 48px and bottom-right with Leaflet's zoom
-              controls by 58px. Layers and key are the same concern anyway —
-              what is drawn, and what it means — so one disclosure holds both. */}
-          <div className="flex flex-col gap-1.5 text-[11px] mb-1.5 pb-1.5 border-b border-border/40 items-start">
+          <div className="flex flex-col gap-1.5 text-[13px] mb-1.5 pb-1.5 border-b border-border/40 items-start">
         <div
-          className="rounded-lg px-3 py-2 flex flex-col gap-1.5 text-[11px]"
-          style={{ background: "var(--ae-surface-2)",  border: "1px solid var(--ae-line)" }}
+          className="flex flex-col gap-1.5 text-[13px]"
+          style={{ width: "100%" }}
         >
           {/* Layer toggles — swatch = the layer's actual mark color (data
               link); on/off is carried by text, not a status dot. */}
@@ -2357,11 +2321,11 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
             />
             <span>Real flights (ADS-B)</span>
             {hasActiveEvents && !externalFeed ? (
-              <span className="text-[11px] font-semibold" style={{ color: "var(--ae-text-3)" }}>
+              <span className="text-[13px] font-semibold" style={{ color: "var(--ae-text-3)" }}>
                 hidden during event
               </span>
             ) : showLiveFlights && liveFlights.length > 0 && (
-              <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full font-mono tabular-nums" style={{ background: "var(--ae-neutral-bg)", color: "var(--ae-text-2)" }}>
+              <span className="text-[13px] font-semibold px-1.5 py-0.5 rounded-full font-mono tabular-nums" style={{ background: "var(--ae-neutral-bg)", color: "var(--ae-text-2)" }}>
                 {liveFlights.length.toLocaleString()}
               </span>
             )}
@@ -2381,7 +2345,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
             />
             <span>Nimbus Air sim</span>
             {showSimulation && simPlanes.length > 0 && (
-              <span className="text-[11px] font-semibold px-1.5 py-0.5 rounded-full font-mono tabular-nums" style={{ background: "var(--ae-teal-bg)", color: "var(--ae-teal-ink)" }}>
+              <span className="text-[13px] font-semibold px-1.5 py-0.5 rounded-full font-mono tabular-nums" style={{ background: "var(--ae-teal-bg)", color: "var(--ae-teal-ink)" }}>
                 {simPlanes.length}
               </span>
             )}
@@ -2405,7 +2369,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
             }}
           >
             <span
-              className="font-mono text-[11px] font-bold tracking-widest uppercase"
+              className="font-mono text-[13px] font-bold tracking-widest uppercase"
               style={{
                 borderBottom: `2px solid ${liveSeeded ? "var(--ae-amber)" : "var(--ae-teal)"}`,
                 paddingBottom: 1,
@@ -2419,7 +2383,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
         {/* ADS-B age — mono text, no status dot; the words carry the state */}
         {ageSec != null && (
           <div
-            className="px-2.5 py-1 rounded-md text-[11px] font-mono font-semibold tracking-wide"
+            className="px-2.5 py-1 rounded-md text-[13px] font-mono font-semibold tracking-wide"
             style={{
               background: "var(--ae-surface-2)",
 
@@ -2472,7 +2436,7 @@ export default function FlightMap({ selectedFlight, onFlightSelect, externalFeed
           {(hasActiveEvents || appliedPlanId) && (
             <>
               <div className="border-t border-border/40 pt-1.5 mt-0.5">
-                <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Nimbus fleet status</div>
+                <div className="text-[13px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Nimbus fleet status</div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <div className="flex items-center gap-1.5">
                     <span className="w-3 h-3 rounded-full shrink-0" style={{ background: MAP_COLORS.unaffected }} />

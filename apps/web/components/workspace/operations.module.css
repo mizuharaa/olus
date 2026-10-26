@@ -144,7 +144,7 @@
 .events[data-expanded=true] form { width: min(100%,760px); margin-inline: auto; }
 .map :global(.ae-map-legend) { display: block!important; bottom: 24px!important; left: 12px!important; transform: none!important; }
 .map :global(.ae-map-legend)>div { max-height: min(480px,60vh)!important; max-width: min(400px,calc(100vw - 32px))!important; font-size: 14px!important; border: 1px solid var(--line)!important; border-radius: 6px!important; box-shadow: none!important; background: var(--surface)!important; }
-.map :global(.ae-map-legend) button { min-height: 44px; border-radius: 6px; font-size: 12px; color: var(--foreground); }
+.map :global(.ae-map-legend) button { min-height: 44px!important; width: 100%; justify-content: flex-start; text-align: left; border: 0; padding: 8px 4px; border-radius: 4px; font-size: 13px; color: var(--foreground); }
 .console :global([aria-label="Map projection"]) button { min-height: 44px!important; }
 @media (prefers-reduced-motion: reduce) { .console * { animation: none!important; transition: none!important; } }
 @media (max-width: 1100px) {
@@ -169,7 +169,7 @@
  .timeline { margin: 8px; padding: 0 8px; }
  .timeline > header > button span { display: none; }
  .timeline > header > button { font-size: 12px; }
- .layerMode { margin-right: 8px; padding: 4px 8px; gap: 0; flex-direction: column; max-width: 170px; }
+ .layerMode { margin-right: 8px; padding: 4px 8px; gap: 0; flex-direction: column; max-width: min(170px,calc(100% - 176px)); }
  .layerMode > span { font-size: 11px; }
  .layerMode button { min-height: 36px; }
  .recoveryTabs label, .recoveryTabs select { max-width: 100%; }

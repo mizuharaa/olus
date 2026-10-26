@@ -1,3 +1,44 @@
+# October 26 production revision
+
+Deployed frontend commit `f0d0dcc` to `https://olus.sh/app/overview` through Vercel deployment `dpl_5cPgdQPLNjpo4DSAKoaHTpJd1HoJ`. Promotion exited 0. Public-domain browser verification found the new compact toolbar and NB202 inspector with scheduled 20:55Z / 23:30Z and revised 21:18Z / 23:53Z. Backend deployment and production data changes were not part of this release.
+
+## Design and fixes
+
+Fresh Mobbin references are recorded in `design.md`: Felt and PamPam for map/overlay structure; KAYAK for flat flight-detail hierarchy. User feedback superseded the permanent sidebar. The map fills the workspace, recovery is an optional overlay, and bottom bars are removed. At the same 1440x812 viewport, map area changed from 1090x454.90625 to 1440x661 (91.96% larger); toolbar height changed from 105.09375 to 57px. These are layout measurements, not performance results.
+
+The flight inspector's flex children had been compressed into strips. Its body now uses ordinary block flow inside a scroll region. Removed decorative aircraft plates and nested fact cards; merged expand and close into one header; preserved schedule, actual delay calculations, cancellation dashes and inferred live-route disclosures. Optional 3D preview mounts only when open. The inert Centre action was removed; selecting a flight focuses it, and Fit network remains. Keyboard-resize hit area is not clipped.
+
+## Executed checks
+
+- `npm run type-check`: exit 0 after inspector changes.
+- `npm run lint`: exit 0, six existing warnings (font, image and effect dependencies).
+- `node scripts/check-flight-inspector.cjs`: exit 0; scheduled/revised UTC times, cancelled timing dashes, recorded passenger value, and zero mounted preview components while closed. Direct TSX rendering emits two styled-jsx attribute warnings because it does not run the Next compiler; production builds compiled those styles successfully.
+- `node scripts/check-zoom-benchmark.cjs`: a new no-canvas case first failed, then passed after correcting trafficVisible. Existing timing, timeout, visibility and cleanup checks passed.
+- `node scripts/check-operations-clarity.cjs`, `check-flight-controls.cjs`, `check-release-boundaries.cjs`: exit 0.
+- `npm run build`: exit 0 with 33 static pages on the inspector revision before the final small heading/disclosure refinements. Vercel production builds on the final source also completed Ready, exit 0.
+- Impeccable mechanical layout scan: empty finding list. This is not a substitute for browser checks.
+- Read-only independent reviewer found the clipped resize hit area and eagerly mounted closed preview; both corrected before promotion.
+
+## Browser smoke observed
+
+Chrome, actual hosted builds; no mocked browser data. Desktop 1440x812 and phone override390x844; override reset afterward. Public-domain final check at1920x1083.
+
+- Recovery costs aligned to consistent numeric columns. Plan B preview changed route colors and retained the not-applied label. Preview did not call apply.
+- On phone, no document horizontal overflow (scrollWidth390), toolbar105px, visible legend and preview label, closable recovery and financial comparison.
+- NB202 route summary109px and timing table123px; no squeezed strips. Phone route/table heights also109/123px. Inspector body naturally scrolls.
+- Tab from inspector close reached Track and scrolled the body200.5px; Track stayed inside the body viewport. Keyboard resize changed420 to436px and back. Expand/restore worked.
+- Financial comparison opened with all four plans and a reachable close control; the wide comparison table uses horizontal scrolling on phone. No plan committed.
+- Live search selected UAL2624. Inferred endpoints and data caveat remained visible. Aircraft preview canvas count was0 closed,1 open, then0 after closing.
+- Public domain served the new inspector after promotion; screenshot `design-previews/inspector-production.jpg`.
+
+## Performance boundary
+
+Zoom is NOT certified smooth. `design-previews/zoom-observed.json` preserves two actual samples with7194 live contacts. Capture-handler-to-zoom-start delays were932.9ms and112.4ms; zoom-event durations295.3ms and283.5ms; worst observed rAF gaps259.5ms and1023.6ms. The next expected sample never arrived. Chrome foreground/occlusion conditions were not confirmed, so the cause cannot be assigned to application code or browser throttling. The probe ignores starts delayed more than1s; therefore this run cannot provide reliable tail-latency statistics. Do not claim FPS, speedup or resolved zoom lag from it. A controlled foreground run remains outstanding.
+
+Earlier review follows for history; its sidebar composition was superseded.
+
+---
+
 # Operations clarity review
 
 Local implementation, 2026-10-25. Preview: http://localhost:5411/app/overview
